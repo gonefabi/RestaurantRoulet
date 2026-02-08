@@ -1,4 +1,6 @@
+// lib/config/api_keys.dart
+
 class ApiKeys {
-  static const String googleMapsKey = 'DEIN_GOOGLE_API_KEY';
-  static const String geoapifyKey = 'DEIN_GEOAPIFY_KEY';
+  // Geoapify API Key
+  static const String geoapifyKey = '7267a94968b446f2a9add00c6363709c';
 }
