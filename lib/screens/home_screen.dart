@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'dart:math';
 import '../providers/roulette_provider.dart';
 import '../widgets/roulette_wheel.dart';
 import '../widgets/loading_animation.dart';
@@ -21,6 +22,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isMapReady = false; 
   bool _isSpinning = false; 
 
+  // Berechnet den optimalen Zoom-Level basierend auf dem Radius
+  double _calculateZoomLevel(double radiusKm) {
+    // Zoom ~ 14 - log2(radius)
+    double zoom = 14.0 - (log(radiusKm) / log(2));
+    return zoom.clamp(5.0, 18.0); 
+  }
+
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(rouletteProvider);
@@ -28,22 +36,30 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final theme = Theme.of(context);
     
     ref.listen<RouletteState>(rouletteProvider, (previous, next) {
-      // Karte bewegen
-      if (next.currentPosition != null && 
-          (previous?.currentPosition != next.currentPosition)) {
-        if (_isMapReady) {
+      if (_isMapReady) {
+        // Fall 1: Position hat sich geändert -> Zentrieren + Zoom anpassen
+        if (next.currentPosition != null && 
+            (previous?.currentPosition != next.currentPosition)) {
+          
           final newCenter = LatLng(next.currentPosition!.latitude, next.currentPosition!.longitude);
-          _mapController.move(newCenter, 13.0);
+          final newZoom = _calculateZoomLevel(next.radiusKm);
+          _mapController.move(newCenter, newZoom);
+        }
+        
+        // Fall 2: Radius hat sich geändert -> Nur Zoom anpassen (Zentrum bleibt)
+        if (next.currentPosition != null && previous != null && previous.radiusKm != next.radiusKm) {
+           final center = LatLng(next.currentPosition!.latitude, next.currentPosition!.longitude);
+           final newZoom = _calculateZoomLevel(next.radiusKm);
+           _mapController.move(center, newZoom);
         }
       }
 
-      // Spin-Logik: Wenn ein Restaurant gewählt wurde, Animation starten
+      // Spin-Logik
       if (next.selectedRestaurant != null && previous?.selectedRestaurant != next.selectedRestaurant) {
         setState(() {
           _isSpinning = true;
         });
         
-        // Wartezeit für die Drehung (5 Sekunden)
         Future.delayed(const Duration(seconds: 5), () {
           if (mounted) {
             setState(() {
@@ -53,7 +69,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         });
       }
       
-      // Reset
       if (next.restaurants.isEmpty) {
          setState(() {
            _isSpinning = false;
@@ -64,6 +79,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final LatLng initialCenter = state.currentPosition != null
         ? LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude)
         : const LatLng(52.5200, 13.4050); 
+    
+    final double initialZoom = _calculateZoomLevel(state.radiusKm);
 
     return Scaffold(
       body: Stack(
@@ -73,7 +90,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             mapController: _mapController,
             options: MapOptions(
               initialCenter: initialCenter, 
-              initialZoom: 13.0,
+              initialZoom: initialZoom,
               minZoom: 5.0, 
               maxZoom: 18.0,
               onMapReady: () => setState(() { _isMapReady = true; }),
@@ -134,13 +151,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
 
-          // 4. Layer: Lade-Animation (Fullscreen, überdeckt alles)
+          // 4. Layer: Lade-Animation
           if (state.isLoading)
             Positioned.fill(
               child: LoadingAnimation(isLoading: state.isLoading),
             ),
 
-          // 5. Layer: Roulette Overlay (Fullscreen, überdeckt Karte und Controls)
+          // 5. Layer: Roulette Overlay
           if (state.restaurants.isNotEmpty)
             Positioned.fill(
               child: _buildRouletteOverlay(context, state, notifier, theme),
@@ -244,7 +261,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                           Slider(
                             value: state.radiusKm,
                             min: 0.5,
-                            max: 20.0,
+                            max: 20.0, // HIER GEÄNDERT: Max 20km
                             divisions: 39,
                             label: "${state.radiusKm.toStringAsFixed(1)} km",
                             onChanged: notifier.setRadius,

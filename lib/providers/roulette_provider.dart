@@ -145,7 +145,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
   void setRadius(double km) {
     if (km < 0.5) km = 0.5;
-    if (km > 50) km = 50;
+    if (km > 20) km = 20; // HIER GEÄNDERT: Max 20km
     state = state.copyWith(radiusKm: km);
   }
 
@@ -184,12 +184,8 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
   void selectWinner() async {
     if (state.restaurants.isNotEmpty) {
-      // Zuerst zurücksetzen, damit UI reagiert (Spin-Animation startet neu)
       state = state.copyWith(clearSelectedRestaurant: true);
-      
-      // Kurze Verzögerung, damit der State-Change propagiert wird
       await Future.delayed(const Duration(milliseconds: 100));
-
       final randomIndex = Random().nextInt(state.restaurants.length);
       state = state.copyWith(selectedRestaurant: state.restaurants[randomIndex]);
     }
