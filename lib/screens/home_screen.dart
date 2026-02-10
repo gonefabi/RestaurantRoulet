@@ -422,24 +422,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => notifier.searchOnLieferando(),
+                onPressed: () async {
+                  final success = await notifier.searchOnLieferando();
+                  if (success && mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: [
+                            const Icon(Icons.content_copy, color: Colors.white),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                '"${state.selectedRestaurant?.name}" in Zwischenablage kopiert',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ),
+                          ],
+                        ),
+                        backgroundColor: Colors.green,
+                        duration: const Duration(seconds: 4),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
+                },
                 icon: const Icon(Icons.delivery_dining, color: Colors.white),
                 label: const Text("AUF LIEFERANDO SUCHEN", style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.orange, // Lieferando Orange
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => notifier.searchOnUberEats(),
-                icon: const Icon(Icons.fastfood, color: Colors.white),
-                label: const Text("AUF UBER EATS SUCHEN", style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF06C167), // Uber Eats Green
                   padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),

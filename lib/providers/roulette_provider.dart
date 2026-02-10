@@ -1,5 +1,6 @@
 import 'dart:math';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart'; 
@@ -141,31 +142,60 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
     }
   }
   
-  Future<void> searchOnLieferando() async {
+  Future<bool> searchOnLieferando() async {
     final restaurant = state.selectedRestaurant;
-    if (restaurant == null) return;
+    if (restaurant == null) return false;
     
-    // Suche auf Google nach "Lieferando [Name] [Stadt]"
-    final searchTerm = "Lieferando ${restaurant.name} ${restaurant.city ?? ''} ${restaurant.street ?? ''}";
-    final query = Uri.encodeComponent(searchTerm);
-    final url = Uri.parse("https://www.google.com/search?q=$query");
-    
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+    // SCHRITT 1: Restaurantnamen in Zwischenablage kopieren
+    try {
+      await Clipboard.setData(ClipboardData(text: restaurant.name));
+      print("In Zwischenablage kopiert: ${restaurant.name}");
+    } catch (e) {
+      print("Fehler beim Kopieren in Zwischenablage: $e");
+      // Fahre trotzdem fort, auch wenn Kopieren fehlschlägt
     }
-  }
+    
+    // SCHRITT 2: Lieferando mit Adresse öffnen
+    final address = restaurant.address ?? '';
+    final street = restaurant.street ?? '';
+    final city = restaurant.city ?? '';
+    
+    // Erstelle eine Adress-String für Lieferando
+    String locationQuery = '';
+    if (street.isNotEmpty) {
+      locationQuery = street;
+    } else if (address.isNotEmpty) {
+      locationQuery = address;
+    } else if (city.isNotEmpty) {
+      locationQuery = city;
+    }
+    
+    if (locationQuery.isEmpty) {
+      locationQuery = 'Berlin'; // Fallback wenn keine Adresse verfügbar
+    }
+    
+    final encodedLocation = Uri.encodeComponent(locationQuery);
+    
+    // Android Intent mit Adresse - versucht die App zu öffnen
+    final intentUrl = Uri.parse("intent://order#Intent;scheme=https;host=www.lieferando.de;package=com.yopeso.lieferando;S.browser_fallback_url=https://www.lieferando.de/en?address=$encodedLocation;end");
+    
+    // Web Fallback - Lieferando Startseite mit Adresse vorausgefüllt
+    final webUrl = Uri.parse("https://www.lieferando.de/en?address=$encodedLocation");
 
-  Future<void> searchOnUberEats() async {
-    final restaurant = state.selectedRestaurant;
-    if (restaurant == null) return;
-    
-    // Suche auf Google nach "Uber Eats [Name] [Stadt]"
-    final searchTerm = "Uber Eats ${restaurant.name} ${restaurant.city ?? ''} ${restaurant.street ?? ''}";
-    final query = Uri.encodeComponent(searchTerm);
-    final url = Uri.parse("https://www.google.com/search?q=$query");
-    
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
+    try {
+      // Versuche die App zu öffnen
+      await launchUrl(intentUrl, mode: LaunchMode.externalApplication);
+      return true; // Erfolgreich
+    } catch (e) {
+      print("Lieferando App konnte nicht geöffnet werden: $e");
+      // Fallback: Öffne die Webseite mit vorausgefüllter Adresse
+      try {
+        await launchUrl(webUrl, mode: LaunchMode.externalApplication);
+        return true; // Erfolgreich
+      } catch (webError) {
+        print("Lieferando Web Fallback Fehler: $webError");
+        return false; // Fehlgeschlagen
+      }
     }
   }
 
