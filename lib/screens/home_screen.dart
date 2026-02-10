@@ -6,7 +6,6 @@ import 'dart:math';
 import '../providers/roulette_provider.dart';
 import '../widgets/roulette_wheel.dart';
 import '../widgets/loading_animation.dart';
-import '../models/place_suggestion.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -22,9 +21,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isMapReady = false; 
   bool _isSpinning = false; 
 
-  // Berechnet den optimalen Zoom-Level basierend auf dem Radius
   double _calculateZoomLevel(double radiusKm) {
-    // Zoom ~ 14 - log2(radius)
     double zoom = 14.0 - (log(radiusKm) / log(2));
     return zoom.clamp(5.0, 18.0); 
   }
@@ -37,7 +34,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     
     ref.listen<RouletteState>(rouletteProvider, (previous, next) {
       if (_isMapReady) {
-        // Fall 1: Position hat sich geändert -> Zentrieren + Zoom anpassen
         if (next.currentPosition != null && 
             (previous?.currentPosition != next.currentPosition)) {
           
@@ -46,7 +42,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _mapController.move(newCenter, newZoom);
         }
         
-        // Fall 2: Radius hat sich geändert -> Nur Zoom anpassen (Zentrum bleibt)
         if (next.currentPosition != null && previous != null && previous.radiusKm != next.radiusKm) {
            final center = LatLng(next.currentPosition!.latitude, next.currentPosition!.longitude);
            final newZoom = _calculateZoomLevel(next.radiusKm);
@@ -54,7 +49,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         }
       }
 
-      // Spin-Logik
       if (next.selectedRestaurant != null && previous?.selectedRestaurant != next.selectedRestaurant) {
         setState(() {
           _isSpinning = true;
@@ -85,7 +79,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // 1. Layer: Karte
+          // 1. Layer: Karte (Hell/Standard)
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
@@ -108,7 +102,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   circles: [
                     CircleMarker(
                       point: LatLng(state.currentPosition!.latitude, state.currentPosition!.longitude),
-                      color: theme.colorScheme.primary.withOpacity(0.1),
+                      color: theme.colorScheme.primary.withOpacity(0.15),
                       borderStrokeWidth: 2,
                       borderColor: theme.colorScheme.primary,
                       useRadiusInMeter: true,
@@ -125,9 +119,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       height: 50,
                       child: Icon(
                         state.isUsingCustomLocation ? Icons.location_on : Icons.my_location, 
-                        color: state.isUsingCustomLocation ? Colors.orange.shade800 : theme.colorScheme.primary,
+                        color: state.isUsingCustomLocation ? Colors.deepOrange : theme.colorScheme.primary,
                         size: 40,
-                        shadows: const [Shadow(color: Colors.black26, blurRadius: 10)],
+                        shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
                       ),
                     ),
                   ],
@@ -135,10 +129,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
 
-          // 2. Layer: Top Controls
-          _buildSettingsMenu(state, notifier, theme),
-
-          // 3. Layer: Bottom Action Button
+          // 2. Layer: Bottom Action Button (Moved behind settings menu)
           if (state.restaurants.isEmpty && !state.isLoading)
             Positioned(
               bottom: 40,
@@ -150,6 +141,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 label: const Text("FINDE RESTAURANTS"),
               ),
             ),
+
+          // 3. Layer: Top Controls (Settings Menu) - NOW ON TOP of button
+          _buildSettingsMenu(state, notifier, theme),
 
           // 4. Layer: Lade-Animation
           if (state.isLoading)
@@ -174,103 +168,175 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget _buildSettingsMenu(RouletteState state, RouletteNotifier notifier, ThemeData theme) {
      return Positioned(
             top: 50,
-            right: 20, 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                FloatingActionButton.small(
-                  backgroundColor: theme.colorScheme.surface,
-                  child: Icon(_showSettings ? Icons.close : Icons.tune, color: theme.colorScheme.primary),
-                  onPressed: () {
-                    setState(() {
-                      _showSettings = !_showSettings;
-                      if (!_showSettings) {
-                        _searchController.clear();
-                        notifier.searchAddress(""); 
-                      }
-                    });
-                  },
-                ),
-                if (_showSettings)
-                  Card(
-                    margin: const EdgeInsets.only(top: 10),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      width: 300, 
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text("Anderen Ort suchen", style: TextStyle(fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 8),
-                          TextField(
-                            controller: _searchController,
-                            decoration: InputDecoration(
-                              hintText: "Stadt oder Adresse...",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              suffixIcon: _searchController.text.isNotEmpty 
-                                ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
-                                  _searchController.clear();
-                                  notifier.searchAddress("");
-                                }) : const Icon(Icons.search),
-                            ),
-                            onChanged: notifier.searchAddress,
+            right: 20,
+            bottom: 100, // Platz lassen, aber max Höhe begrenzen
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton.small(
+                    backgroundColor: theme.colorScheme.surface,
+                    child: Icon(_showSettings ? Icons.close : Icons.tune, color: theme.colorScheme.primary),
+                    onPressed: () {
+                      setState(() {
+                        _showSettings = !_showSettings;
+                        if (!_showSettings) {
+                          _searchController.clear();
+                          notifier.searchAddress(""); 
+                        }
+                      });
+                    },
+                  ),
+                  if (_showSettings)
+                    Flexible(
+                      child: Card(
+                        margin: const EdgeInsets.only(top: 10),
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          width: 300,
+                          // Making it constrained and scrollable
+                          constraints: BoxConstraints(
+                            maxHeight: MediaQuery.of(context).size.height * 0.65,
                           ),
-                          
-                          if (state.addressSuggestions.isNotEmpty)
-                            Container(
-                              constraints: const BoxConstraints(maxHeight: 150),
-                              margin: const EdgeInsets.only(top: 8),
-                              decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
-                              child: ListView.builder(
-                                shrinkWrap: true,
-                                itemCount: state.addressSuggestions.length,
-                                itemBuilder: (context, index) {
-                                  final place = state.addressSuggestions[index];
-                                  return ListTile(
-                                    title: Text(place.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                    onTap: () {
-                                      notifier.selectAddress(place);
-                                      FocusScope.of(context).unfocus();
-                                      _searchController.clear();
-                                      setState(() { _showSettings = false; });
-                                    },
-                                  );
-                                },
-                              ),
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text("Anderen Ort suchen", style: TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 8),
+                                TextField(
+                                  controller: _searchController,
+                                  decoration: InputDecoration(
+                                    hintText: "Stadt oder Adresse...",
+                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    suffixIcon: _searchController.text.isNotEmpty 
+                                      ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
+                                        _searchController.clear();
+                                        notifier.searchAddress("");
+                                      }) : const Icon(Icons.search),
+                                  ),
+                                  onChanged: notifier.searchAddress,
+                                ),
+                                
+                                if (state.addressSuggestions.isNotEmpty)
+                                  Container(
+                                    constraints: const BoxConstraints(maxHeight: 150),
+                                    margin: const EdgeInsets.only(top: 8),
+                                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                                    child: ListView.builder(
+                                      shrinkWrap: true,
+                                      physics: const NeverScrollableScrollPhysics(), // Scroll via parent
+                                      itemCount: state.addressSuggestions.length,
+                                      itemBuilder: (context, index) {
+                                        final place = state.addressSuggestions[index];
+                                        return ListTile(
+                                          title: Text(place.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                          onTap: () {
+                                            notifier.selectAddress(place);
+                                            FocusScope.of(context).unfocus();
+                                            _searchController.clear();
+                                            setState(() { _showSettings = false; });
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ),
+
+                                if (state.isUsingCustomLocation)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: TextButton.icon(
+                                      onPressed: () => notifier.useCurrentLocation(), 
+                                      icon: const Icon(Icons.my_location),
+                                      label: const Text("Meinen Standort verwenden"),
+                                    ),
+                                  ),
+
+                                const Divider(height: 30),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Text("Suchradius", style: TextStyle(fontWeight: FontWeight.bold)),
+                                    Text("${state.radiusKm.toStringAsFixed(1)} km", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                                Slider(
+                                  value: state.radiusKm,
+                                  min: 0.5,
+                                  max: 20.0,
+                                  divisions: 39,
+                                  label: "${state.radiusKm.toStringAsFixed(1)} km",
+                                  onChanged: notifier.setRadius,
+                                ),
+                                
+                                const Divider(height: 20),
+                                
+                                const Text("Filter", style: TextStyle(fontWeight: FontWeight.bold)),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text("Vegan verfügbar"),
+                                  value: state.isVegan,
+                                  activeColor: theme.colorScheme.primary,
+                                  onChanged: (val) => notifier.toggleVegan(val),
+                                ),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text("Vegetarisch verfügbar"),
+                                  value: state.isVegetarian,
+                                  activeColor: theme.colorScheme.primary,
+                                  onChanged: (val) => notifier.toggleVegetarian(val),
+                                ),
+                                SwitchListTile(
+                                  contentPadding: EdgeInsets.zero,
+                                  title: const Text("Besuchte ausblenden"),
+                                  subtitle: const Text("Bereits besuchte Orte ausschließen"),
+                                  value: state.excludeVisited,
+                                  activeColor: theme.colorScheme.primary,
+                                  onChanged: (val) => notifier.toggleExcludeVisited(val),
+                                ),
+                                
+                                const Text("Küche", style: TextStyle(fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8.0,
+                                  runSpacing: 4.0,
+                                  children: {
+                                    'Italienisch': 'italian',
+                                    'Asiatisch': 'asian',
+                                    'Deutsch': 'german',
+                                    'Chinesisch': 'chinese',
+                                    'Japanisch': 'japanese',
+                                    'Mexikanisch': 'mexican',
+                                    'Indisch': 'indian',
+                                    'Französisch': 'french',
+                                    'Griechisch': 'greek',
+                                    'Amerikanisch': 'american',
+                                    'Burger': 'burger',
+                                    'Pizza': 'pizza',
+                                    'Sushi': 'sushi',
+                                  }.entries.map((entry) {
+                                    final isSelected = state.selectedCuisines.contains(entry.value);
+                                    return FilterChip(
+                                      label: Text(entry.key),
+                                      selected: isSelected,
+                                      onSelected: (_) => notifier.toggleCuisine(entry.value),
+                                      selectedColor: theme.colorScheme.primary.withOpacity(0.2),
+                                      checkmarkColor: theme.colorScheme.primary,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
                             ),
-
-                          if (state.isUsingCustomLocation)
-                            Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: TextButton.icon(
-                                onPressed: () => notifier.useCurrentLocation(), 
-                                icon: const Icon(Icons.my_location),
-                                label: const Text("Meinen Standort verwenden"),
-                              ),
-                            ),
-
-                          const Divider(height: 30),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text("Suchradius", style: TextStyle(fontWeight: FontWeight.bold)),
-                              Text("${state.radiusKm.toStringAsFixed(1)} km", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-                            ],
                           ),
-                          Slider(
-                            value: state.radiusKm,
-                            min: 0.5,
-                            max: 20.0, // HIER GEÄNDERT: Max 20km
-                            divisions: 39,
-                            label: "${state.radiusKm.toStringAsFixed(1)} km",
-                            onChanged: notifier.setRadius,
-                          ),
-                        ],
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           );
   }
@@ -350,6 +416,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
+            // "Als besucht markieren" manuell entfernt, da automatisch beim Starten der Route
+            if (state.visitedIds.contains(state.selectedRestaurant!.id))
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.check, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text("Bereits besucht", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ),
           ],
         ),
       ),

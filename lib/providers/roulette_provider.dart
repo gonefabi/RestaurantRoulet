@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../models/restaurant.dart';
 import '../models/place_suggestion.dart';
 import '../services/api_service.dart';
+import '../services/database_service.dart';
 
 // State Class
 class RouletteState {
@@ -18,6 +19,12 @@ class RouletteState {
   final bool isUsingCustomLocation;
   final List<PlaceSuggestion> addressSuggestions;
 
+  final List<String> selectedCuisines;
+  final bool isVegan;
+  final bool isVegetarian;
+  final bool excludeVisited;
+  final Set<String> visitedIds;
+
   RouletteState({
     this.isLoading = false,
     this.restaurants = const [],
@@ -27,6 +34,11 @@ class RouletteState {
     this.radiusKm = 2.0, 
     this.isUsingCustomLocation = false,
     this.addressSuggestions = const [],
+    this.selectedCuisines = const [],
+    this.isVegan = false,
+    this.isVegetarian = false,
+    this.excludeVisited = true,
+    this.visitedIds = const {},
   });
 
   RouletteState copyWith({
@@ -39,6 +51,11 @@ class RouletteState {
     bool clearSelectedRestaurant = false,
     bool? isUsingCustomLocation,
     List<PlaceSuggestion>? addressSuggestions,
+    List<String>? selectedCuisines,
+    bool? isVegan,
+    bool? isVegetarian,
+    bool? excludeVisited,
+    Set<String>? visitedIds,
   }) {
     return RouletteState(
       isLoading: isLoading ?? this.isLoading,
@@ -49,6 +66,11 @@ class RouletteState {
       radiusKm: radiusKm ?? this.radiusKm,
       isUsingCustomLocation: isUsingCustomLocation ?? this.isUsingCustomLocation,
       addressSuggestions: addressSuggestions ?? this.addressSuggestions,
+      selectedCuisines: selectedCuisines ?? this.selectedCuisines,
+      isVegan: isVegan ?? this.isVegan,
+      isVegetarian: isVegetarian ?? this.isVegetarian,
+      excludeVisited: excludeVisited ?? this.excludeVisited,
+      visitedIds: visitedIds ?? this.visitedIds,
     );
   }
 }
@@ -56,9 +78,49 @@ class RouletteState {
 // Notifier
 class RouletteNotifier extends StateNotifier<RouletteState> {
   final ApiService _apiService;
+  final DatabaseService _dbService;
 
-  RouletteNotifier(this._apiService) : super(RouletteState()) {
-    updateLocation();
+  RouletteNotifier(this._apiService, this._dbService) : super(RouletteState()) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    await updateLocation();
+    await _loadVisitedRestaurants();
+  }
+
+  Future<void> _loadVisitedRestaurants() async {
+    final ids = await _dbService.getVisitedRestaurantIds();
+    state = state.copyWith(visitedIds: ids);
+  }
+
+  // --- Filter ---
+  void toggleCuisine(String cuisine) {
+    var currentCuisines = List<String>.from(state.selectedCuisines);
+    if (currentCuisines.contains(cuisine)) {
+      currentCuisines.remove(cuisine);
+    } else {
+      currentCuisines.add(cuisine);
+    }
+    state = state.copyWith(selectedCuisines: currentCuisines);
+  }
+
+  void toggleVegan(bool value) {
+    state = state.copyWith(isVegan: value);
+  }
+
+  void toggleVegetarian(bool value) {
+    state = state.copyWith(isVegetarian: value);
+  }
+
+  void toggleExcludeVisited(bool value) {
+    state = state.copyWith(excludeVisited: value);
+  }
+
+  Future<void> markAsVisited(Restaurant restaurant) async {
+    await _dbService.addVisitedRestaurant(restaurant);
+    final ids = await _dbService.getVisitedRestaurantIds();
+    state = state.copyWith(visitedIds: ids);
   }
 
   // --- Navigation ---
@@ -66,6 +128,9 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
     final restaurant = state.selectedRestaurant;
     if (restaurant == null) return;
 
+    // Automatisch als besucht markieren
+    await markAsVisited(restaurant);
+    
     final query = Uri.encodeComponent("${restaurant.name}, ${restaurant.address ?? ''}");
     final googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$query");
 
@@ -145,7 +210,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
   void setRadius(double km) {
     if (km < 0.5) km = 0.5;
-    if (km > 20) km = 20; // HIER GEÄNDERT: Max 20km
+    if (km > 20) km = 20; 
     state = state.copyWith(radiusKm: km);
   }
 
@@ -161,18 +226,33 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
         throw Exception("Kein Standort ausgewählt.");
       }
 
-      final filters = SearchFilters(radiusKm: state.radiusKm);
-      final results = await _apiService.fetchRestaurants(
+      final filters = SearchFilters(
+        radiusKm: state.radiusKm,
+        cuisines: state.selectedCuisines,
+        isVegan: state.isVegan,
+        isVegetarian: state.isVegetarian,
+      );
+      
+      var results = await _apiService.fetchRestaurants(
         lat: state.currentPosition!.latitude,
         lng: state.currentPosition!.longitude,
         filters: filters,
       );
 
+      // Filter visited restaurants if enabled
+      if (state.excludeVisited) {
+        // Refresh visited IDs just in case
+        await _loadVisitedRestaurants();
+        results = results.where((r) => !state.visitedIds.contains(r.id)).toList();
+      }
+
       if (results.isEmpty) {
-        state = state.copyWith(
+         String errorMsg = 'Keine Restaurants gefunden.';
+         if (state.excludeVisited) errorMsg += ' (Besuchte ausgeblendet)';
+         state = state.copyWith(
           isLoading: false, 
           restaurants: [], 
-          error: 'Keine Restaurants gefunden. Versuche den Radius zu erhöhen.',
+          error: errorMsg,
         );
       } else {
         state = state.copyWith(isLoading: false, restaurants: results);
@@ -222,5 +302,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
 final rouletteProvider = StateNotifierProvider<RouletteNotifier, RouletteState>((ref) {
   final apiService = ref.watch(apiServiceProvider);
-  return RouletteNotifier(apiService);
+  // Wir erstellen hier eine Instanz von DatabaseService
+  final dbService = DatabaseService();
+  return RouletteNotifier(apiService, dbService);
 });
