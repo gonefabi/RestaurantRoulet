@@ -18,9 +18,9 @@ class RouletteState {
   final double radiusKm;
   final bool isUsingCustomLocation;
   final List<PlaceSuggestion> addressSuggestions;
-
+ 
   final List<String> selectedCuisines;
-  final bool isVegan;
+  final bool isVegan; // Wieder hinzugefügt
   final bool isVegetarian;
   final bool excludeVisited;
   final Set<String> visitedIds;
@@ -35,7 +35,7 @@ class RouletteState {
     this.isUsingCustomLocation = false,
     this.addressSuggestions = const [],
     this.selectedCuisines = const [],
-    this.isVegan = false,
+    this.isVegan = false, // Wieder hinzugefügt
     this.isVegetarian = false,
     this.excludeVisited = true,
     this.visitedIds = const {},
@@ -52,7 +52,7 @@ class RouletteState {
     bool? isUsingCustomLocation,
     List<PlaceSuggestion>? addressSuggestions,
     List<String>? selectedCuisines,
-    bool? isVegan,
+    bool? isVegan, // Wieder hinzugefügt
     bool? isVegetarian,
     bool? excludeVisited,
     Set<String>? visitedIds,
@@ -67,7 +67,7 @@ class RouletteState {
       isUsingCustomLocation: isUsingCustomLocation ?? this.isUsingCustomLocation,
       addressSuggestions: addressSuggestions ?? this.addressSuggestions,
       selectedCuisines: selectedCuisines ?? this.selectedCuisines,
-      isVegan: isVegan ?? this.isVegan,
+      isVegan: isVegan ?? this.isVegan, // Wieder hinzugefügt
       isVegetarian: isVegetarian ?? this.isVegetarian,
       excludeVisited: excludeVisited ?? this.excludeVisited,
       visitedIds: visitedIds ?? this.visitedIds,
@@ -123,7 +123,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
     state = state.copyWith(visitedIds: ids);
   }
 
-  // --- Navigation ---
+  // --- Navigation & Externe Links ---
   Future<void> launchGoogleMaps() async {
     final restaurant = state.selectedRestaurant;
     if (restaurant == null) return;
@@ -138,6 +138,34 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
       await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
     } else {
       print("Konnte Karten-App nicht öffnen: $googleMapsUrl");
+    }
+  }
+  
+  Future<void> searchOnLieferando() async {
+    final restaurant = state.selectedRestaurant;
+    if (restaurant == null) return;
+    
+    // Suche auf Google nach "Lieferando [Name] [Stadt]"
+    final searchTerm = "Lieferando ${restaurant.name} ${restaurant.city ?? ''} ${restaurant.street ?? ''}";
+    final query = Uri.encodeComponent(searchTerm);
+    final url = Uri.parse("https://www.google.com/search?q=$query");
+    
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> searchOnUberEats() async {
+    final restaurant = state.selectedRestaurant;
+    if (restaurant == null) return;
+    
+    // Suche auf Google nach "Uber Eats [Name] [Stadt]"
+    final searchTerm = "Uber Eats ${restaurant.name} ${restaurant.city ?? ''} ${restaurant.street ?? ''}";
+    final query = Uri.encodeComponent(searchTerm);
+    final url = Uri.parse("https://www.google.com/search?q=$query");
+    
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 

@@ -298,7 +298,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   activeColor: theme.colorScheme.primary,
                                   onChanged: (val) => notifier.toggleExcludeVisited(val),
                                 ),
-                                
+
                                 const Text("Küche", style: TextStyle(fontWeight: FontWeight.bold)),
                                 const SizedBox(height: 8),
                                 Wrap(
@@ -416,7 +416,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ),
               ),
             ),
-            // "Als besucht markieren" manuell entfernt, da automatisch beim Starten der Route
+            
+            // Lieferando/Uber Eats Buttons - IMMER sichtbar
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => notifier.searchOnLieferando(),
+                icon: const Icon(Icons.delivery_dining, color: Colors.white),
+                label: const Text("AUF LIEFERANDO SUCHEN", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange, // Lieferando Orange
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => notifier.searchOnUberEats(),
+                icon: const Icon(Icons.fastfood, color: Colors.white),
+                label: const Text("AUF UBER EATS SUCHEN", style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF06C167), // Uber Eats Green
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+
+            // Status "Bereits besucht"
             if (state.visitedIds.contains(state.selectedRestaurant!.id))
               Padding(
                 padding: const EdgeInsets.only(top: 12.0),
