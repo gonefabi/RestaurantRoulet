@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'services/notification_service.dart';
 import 'firebase_options.dart';
 import 'widgets/auth_wrapper.dart';
 
@@ -10,6 +11,11 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Initialize Notifications
+  final notificationService = NotificationService();
+  await notificationService.init();
+  await notificationService.requestPermissions();
   
   runApp(
     const ProviderScope(

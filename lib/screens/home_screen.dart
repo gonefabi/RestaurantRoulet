@@ -6,6 +6,12 @@ import 'dart:math';
 import '../providers/roulette_provider.dart';
 import '../widgets/roulette_wheel.dart';
 import '../widgets/loading_animation.dart';
+import 'visited_restaurants_screen.dart';
+import 'notification_settings_screen.dart';
+import '../widgets/rating_popup.dart';
+import '../services/database_service.dart';
+import '../services/notification_service.dart';
+import '../models/restaurant.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -17,6 +23,8 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final MapController _mapController = MapController();
   final TextEditingController _searchController = TextEditingController();
+  final NotificationService _notificationService = NotificationService();
+  final DatabaseService _dbService = DatabaseService();
   bool _showSettings = false;
   bool _isMapReady = false; 
   bool _isSpinning = false; 
@@ -24,6 +32,75 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   double _calculateZoomLevel(double radiusKm) {
     double zoom = 14.0 - (log(radiusKm) / log(2));
     return zoom.clamp(5.0, 18.0); 
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _checkForRatingPopup();
+  }
+
+  Future<void> _checkForRatingPopup() async {
+    // 1. Check if app launched continuously from notification
+    final launchDetails = await _notificationService.flutterLocalNotificationsPlugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      final payload = launchDetails?.notificationResponse?.payload;
+      if (payload != null) {
+        _showPopupForId(payload);
+        return;
+      }
+    }
+
+    // 2. Check for time-based popup
+    final visited = await _dbService.getVisitedRestaurants();
+    final now = DateTime.now();
+
+    for (var r in visited) {
+      if (r.visitedAt == null) continue;
+      
+      // Filter: Unrated and not dismissed
+      // UserRating is null or 0 means unrated
+      bool isUnrated = (r.userRating == null || r.userRating == 0);
+      if (!isUnrated || r.popupDismissed) continue;
+
+      final diff = now.difference(r.visitedAt!);
+      // "nach 15 min ... aber nicht mehr nach 42 Stunden"
+      // Assuming 42 hours = 2 days minus a bit, user said 42h explicitly.
+      if (diff.inMinutes > 15 && diff.inHours < 42) {
+        if (mounted) {
+           _showRatingDialog(r);
+           return; // Show only one at a time
+        }
+      }
+    }
+  }
+
+  Future<void> _showPopupForId(String id) async {
+    final visited = await _dbService.getVisitedRestaurants();
+    try {
+      final restaurant = visited.firstWhere((r) => r.id == id);
+      if (mounted) _showRatingDialog(restaurant);
+    } catch (e) {
+      print("Restaurant for popup not found: $id");
+    }
+  }
+
+  void _showRatingDialog(Restaurant restaurant) {
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Force user to use X or Save
+      builder: (context) => RatingPopup(
+        restaurant: restaurant,
+        onDismiss: () async {
+          await _dbService.markPopupDismissed(restaurant.id);
+          Navigator.of(context).pop();
+        },
+        onRatingSaved: (rating) async {
+          await _dbService.updateRating(restaurant.id, rating);
+          Navigator.of(context).pop();
+        },
+      ),
+    );
   }
 
   @override
@@ -245,7 +322,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
 
-                                if (state.isUsingCustomLocation)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 10),
                                     child: TextButton.icon(
@@ -255,7 +331,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     ),
                                   ),
 
-                                const Divider(height: 30),
+                                const Divider(height: 20),
+
+                                ListTile(
+                                  leading: const Icon(Icons.history),
+                                  title: const Text("Besuchte Restaurants"),
+                                  onTap: () {
+                                    setState(() { _showSettings = false; });
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const VisitedRestaurantsScreen()));
+                                  },
+                                ),
+                                ListTile(
+                                  leading: const Icon(Icons.notifications),
+                                  title: const Text("Benachrichtigungen"),
+                                  onTap: () {
+                                    setState(() { _showSettings = false; });
+                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
+                                  },
+                                ),
+
+                                const Divider(height: 20),
 
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -361,6 +456,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 RouletteWheelWidget(
                   restaurants: state.restaurants,
                   onFinished: (index) {},
+                  onSpin: () {
+                    // Only allow spin if not already spinning and no winner selected (or re-spin logic)
+                    if (!_isSpinning && state.selectedRestaurant == null) {
+                       notifier.selectWinner();
+                    }
+                  },
                 ),
           
               const SizedBox(height: 20),
@@ -481,18 +582,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          ElevatedButton(
-            onPressed: notifier.selectWinner,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.secondary,
-              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-            ),
-            child: const Text("DREHEN", style: TextStyle(color: Colors.black, fontSize: 20, fontWeight: FontWeight.bold)),
-          ),
-          const SizedBox(width: 16),
+          // "DREHEN" button removed as we have a central spin button now
           TextButton(
             onPressed: notifier.clearRestaurants,
-            child: const Text("Abbrechen"),
+            child: const Text("Abbrechen", style: TextStyle(fontSize: 16)),
           ),
         ],
       );

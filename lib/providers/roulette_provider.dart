@@ -8,6 +8,7 @@ import '../models/restaurant.dart';
 import '../models/place_suggestion.dart';
 import '../services/api_service.dart';
 import '../services/database_service.dart';
+import '../services/notification_service.dart';
 
 // State Class
 class RouletteState {
@@ -80,8 +81,9 @@ class RouletteState {
 class RouletteNotifier extends StateNotifier<RouletteState> {
   final ApiService _apiService;
   final DatabaseService _dbService;
+  final NotificationService _notificationService;
 
-  RouletteNotifier(this._apiService, this._dbService) : super(RouletteState()) {
+  RouletteNotifier(this._apiService, this._dbService, this._notificationService) : super(RouletteState()) {
     _init();
   }
 
@@ -120,6 +122,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
   Future<void> markAsVisited(Restaurant restaurant) async {
     await _dbService.addVisitedRestaurant(restaurant);
+    await _notificationService.scheduleRatingNotification(restaurant);
     final ids = await _dbService.getVisitedRestaurantIds();
     state = state.copyWith(visitedIds: ids);
   }
@@ -360,7 +363,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
 final rouletteProvider = StateNotifierProvider<RouletteNotifier, RouletteState>((ref) {
   final apiService = ref.watch(apiServiceProvider);
-  // Wir erstellen hier eine Instanz von DatabaseService
   final dbService = DatabaseService();
-  return RouletteNotifier(apiService, dbService);
+  final notificationService = NotificationService();
+  return RouletteNotifier(apiService, dbService, notificationService);
 });
