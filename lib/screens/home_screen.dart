@@ -29,6 +29,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   bool _isMapReady = false; 
   bool _isSpinning = false; 
 
+  bool _showProfile = false;
+
   double _calculateZoomLevel(double radiusKm) {
     double zoom = 14.0 - (log(radiusKm) / log(2));
     return zoom.clamp(5.0, 18.0); 
@@ -166,7 +168,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               maxZoom: 18.0,
               onMapReady: () => setState(() { _isMapReady = true; }),
               onTap: (_, __) {
-                if (_showSettings) setState(() { _showSettings = false; });
+                if (_showSettings || _showProfile) setState(() { 
+                  _showSettings = false; 
+                  _showProfile = false;
+                });
               },
             ),
             children: [
@@ -215,9 +220,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               child: ElevatedButton.icon(
                 onPressed: () => notifier.loadRestaurants(),
                 icon: const Icon(Icons.casino_outlined, color: Colors.white),
-                label: const Text("FINDE RESTAURANTS"),
+                label: const Text("Restaurant suchen"),
               ),
             ),
+
+          // 2.5. Layer: Top Left Profile Menu
+          _buildProfileMenu(theme),
 
           // 3. Layer: Top Controls (Settings Menu) - NOW ON TOP of button
           _buildSettingsMenu(state, notifier, theme),
@@ -242,6 +250,81 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildProfileMenu(ThemeData theme) {
+     return Positioned(
+            top: 50,
+            left: 20,
+            bottom: 100, // Platz lassen
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  FloatingActionButton.small(
+                    heroTag: 'profile_btn',
+                    backgroundColor: theme.colorScheme.surface,
+                    child: Icon(_showProfile ? Icons.close : Icons.person, color: theme.colorScheme.primary),
+                    onPressed: () {
+                      setState(() {
+                        _showProfile = !_showProfile;
+                        if (_showProfile && _showSettings) {
+                           _showSettings = false;
+                        }
+                      });
+                    },
+                  ),
+                  if (_showProfile)
+                    Flexible(
+                      child: Card(
+                        margin: const EdgeInsets.only(top: 10),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          width: 250,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                child: Text("Profil", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                              ),
+                              const Divider(),
+                              ListTile(
+                                leading: const Icon(Icons.history),
+                                title: const Text("Besuchte Restaurants"),
+                                dense: true,
+                                onTap: () {
+                                  setState(() => _showProfile = false);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const VisitedRestaurantsScreen()),
+                                  );
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.notifications),
+                                title: const Text("Benachrichtigungen"),
+                                dense: true,
+                                onTap: () {
+                                  setState(() => _showProfile = false);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          );
+  }
+
   Widget _buildSettingsMenu(RouletteState state, RouletteNotifier notifier, ThemeData theme) {
      return Positioned(
             top: 50,
@@ -254,11 +337,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   FloatingActionButton.small(
+                    heroTag: 'filter_btn',
                     backgroundColor: theme.colorScheme.surface,
                     child: Icon(_showSettings ? Icons.close : Icons.tune, color: theme.colorScheme.primary),
                     onPressed: () {
                       setState(() {
                         _showSettings = !_showSettings;
+                        if (_showSettings && _showProfile) {
+                           _showProfile = false;
+                        }
                         if (!_showSettings) {
                           _searchController.clear();
                           notifier.searchAddress(""); 
@@ -330,25 +417,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                       label: const Text("Meinen Standort verwenden"),
                                     ),
                                   ),
-
-                                const Divider(height: 20),
-
-                                ListTile(
-                                  leading: const Icon(Icons.history),
-                                  title: const Text("Besuchte Restaurants"),
-                                  onTap: () {
-                                    setState(() { _showSettings = false; });
-                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const VisitedRestaurantsScreen()));
-                                  },
-                                ),
-                                ListTile(
-                                  leading: const Icon(Icons.notifications),
-                                  title: const Text("Benachrichtigungen"),
-                                  onTap: () {
-                                    setState(() { _showSettings = false; });
-                                    Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()));
-                                  },
-                                ),
 
                                 const Divider(height: 20),
 

@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:882794991997:android:df7b85e469ac702d613c14",
         "android_client_info": {
-          "package_name": "com.example.restaurant_roulette"
+          "package_name": "de.fabianheinen.restaurantroulette"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "882794991997-6796ut924mpusvtchdn0gmm3i4vilt2d.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.restaurant_roulette",
+            "package_name": "de.fabianheinen.restaurantroulette",
             "certificate_hash": "423f06f3d846bef7680c6b61fb9d9c973594e8c9"
           }
         }

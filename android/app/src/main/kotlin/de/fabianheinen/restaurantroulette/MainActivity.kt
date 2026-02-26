@@ -1,4 +1,4 @@
-package com.example.restaurant_roulette
+package de.fabianheinen.restaurantroulette
 
 import io.flutter.embedding.android.FlutterActivity
 

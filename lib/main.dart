@@ -47,11 +47,9 @@ class MyApp extends StatelessWidget {
         colorScheme: const ColorScheme.light(
           primary: primaryColor,
           secondary: accentColor,
-          background: backgroundColor,
           surface: cardColor,
           onPrimary: Colors.white,
           onSecondary: Colors.black,
-          onBackground: textColor,
           onSurface: textColor,
         ),
 
