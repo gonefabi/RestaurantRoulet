@@ -358,141 +358,147 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       child: Card(
                         margin: const EdgeInsets.only(top: 10),
                         child: Container(
-                          padding: const EdgeInsets.all(16),
+                          // Setzen des Paddings zurück für den Container, um den Scrollbalken an den Rand zu bekommen
+                          padding: EdgeInsets.zero,
                           width: 300,
-                          // Making it constrained and scrollable
                           constraints: BoxConstraints(
                             maxHeight: MediaQuery.of(context).size.height * 0.65,
                           ),
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text("Anderen Ort suchen", style: TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 8),
-                                TextField(
-                                  controller: _searchController,
-                                  decoration: InputDecoration(
-                                    hintText: "Stadt oder Adresse...",
-                                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                    suffixIcon: _searchController.text.isNotEmpty 
-                                      ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
-                                        _searchController.clear();
-                                        notifier.searchAddress("");
-                                      }) : const Icon(Icons.search),
-                                  ),
-                                  onChanged: notifier.searchAddress,
-                                ),
-                                
-                                if (state.addressSuggestions.isNotEmpty)
-                                  Container(
-                                    constraints: const BoxConstraints(maxHeight: 150),
-                                    margin: const EdgeInsets.only(top: 8),
-                                    decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
-                                    child: ListView.builder(
-                                      shrinkWrap: true,
-                                      physics: const NeverScrollableScrollPhysics(), // Scroll via parent
-                                      itemCount: state.addressSuggestions.length,
-                                      itemBuilder: (context, index) {
-                                        final place = state.addressSuggestions[index];
-                                        return ListTile(
-                                          title: Text(place.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                          onTap: () {
-                                            notifier.selectAddress(place);
-                                            FocusScope.of(context).unfocus();
-                                            _searchController.clear();
-                                            setState(() { _showSettings = false; });
-                                          },
-                                        );
-                                      },
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            thickness: 4.0,
+                            radius: const Radius.circular(8.0),
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.all(16), // Padding verschoben ins Scrolling
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text("Anderen Ort suchen", style: TextStyle(fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 8),
+                                  TextField(
+                                    controller: _searchController,
+                                    decoration: InputDecoration(
+                                      hintText: "Stadt oder Adresse...",
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                      suffixIcon: _searchController.text.isNotEmpty 
+                                        ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
+                                          _searchController.clear();
+                                          notifier.searchAddress("");
+                                        }) : const Icon(Icons.search),
                                     ),
+                                    onChanged: notifier.searchAddress,
                                   ),
-
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 10),
-                                    child: TextButton.icon(
-                                      onPressed: () => notifier.useCurrentLocation(), 
-                                      icon: const Icon(Icons.my_location),
-                                      label: const Text("Meinen Standort verwenden"),
+                                  
+                                  if (state.addressSuggestions.isNotEmpty)
+                                    Container(
+                                      constraints: const BoxConstraints(maxHeight: 150),
+                                      margin: const EdgeInsets.only(top: 8),
+                                      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
+                                      child: ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: const NeverScrollableScrollPhysics(), // Scroll via parent
+                                        itemCount: state.addressSuggestions.length,
+                                        itemBuilder: (context, index) {
+                                          final place = state.addressSuggestions[index];
+                                          return ListTile(
+                                            title: Text(place.description, maxLines: 2, overflow: TextOverflow.ellipsis),
+                                            onTap: () {
+                                              notifier.selectAddress(place);
+                                              FocusScope.of(context).unfocus();
+                                              _searchController.clear();
+                                              setState(() { _showSettings = false; });
+                                            },
+                                          );
+                                        },
+                                      ),
                                     ),
+  
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: TextButton.icon(
+                                        onPressed: () => notifier.useCurrentLocation(), 
+                                        icon: const Icon(Icons.my_location),
+                                        label: const Text("Meinen Standort verwenden"),
+                                      ),
+                                    ),
+  
+                                  const Divider(height: 20),
+  
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      const Text("Suchradius", style: TextStyle(fontWeight: FontWeight.bold)),
+                                      Text("${state.radiusKm.toStringAsFixed(1)} km", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
+                                    ],
                                   ),
-
-                                const Divider(height: 20),
-
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    const Text("Suchradius", style: TextStyle(fontWeight: FontWeight.bold)),
-                                    Text("${state.radiusKm.toStringAsFixed(1)} km", style: TextStyle(color: theme.colorScheme.primary, fontWeight: FontWeight.bold)),
-                                  ],
-                                ),
-                                Slider(
-                                  value: state.radiusKm,
-                                  min: 0.5,
-                                  max: 20.0,
-                                  divisions: 39,
-                                  label: "${state.radiusKm.toStringAsFixed(1)} km",
-                                  onChanged: notifier.setRadius,
-                                ),
-                                
-                                const Divider(height: 20),
-                                
-                                const Text("Filter", style: TextStyle(fontWeight: FontWeight.bold)),
-                                SwitchListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: const Text("Vegan verfügbar"),
-                                  value: state.isVegan,
-                                  activeColor: theme.colorScheme.primary,
-                                  onChanged: (val) => notifier.toggleVegan(val),
-                                ),
-                                SwitchListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: const Text("Vegetarisch verfügbar"),
-                                  value: state.isVegetarian,
-                                  activeColor: theme.colorScheme.primary,
-                                  onChanged: (val) => notifier.toggleVegetarian(val),
-                                ),
-                                SwitchListTile(
-                                  contentPadding: EdgeInsets.zero,
-                                  title: const Text("Besuchte ausblenden"),
-                                  subtitle: const Text("Bereits besuchte Orte ausschließen"),
-                                  value: state.excludeVisited,
-                                  activeColor: theme.colorScheme.primary,
-                                  onChanged: (val) => notifier.toggleExcludeVisited(val),
-                                ),
-
-                                const Text("Küche", style: TextStyle(fontWeight: FontWeight.bold)),
-                                const SizedBox(height: 8),
-                                Wrap(
-                                  spacing: 8.0,
-                                  runSpacing: 4.0,
-                                  children: {
-                                    'Italienisch': 'italian',
-                                    'Asiatisch': 'asian',
-                                    'Deutsch': 'german',
-                                    'Chinesisch': 'chinese',
-                                    'Japanisch': 'japanese',
-                                    'Mexikanisch': 'mexican',
-                                    'Indisch': 'indian',
-                                    'Französisch': 'french',
-                                    'Griechisch': 'greek',
-                                    'Amerikanisch': 'american',
-                                    'Burger': 'burger',
-                                    'Pizza': 'pizza',
-                                    'Sushi': 'sushi',
-                                  }.entries.map((entry) {
-                                    final isSelected = state.selectedCuisines.contains(entry.value);
-                                    return FilterChip(
-                                      label: Text(entry.key),
-                                      selected: isSelected,
-                                      onSelected: (_) => notifier.toggleCuisine(entry.value),
-                                      selectedColor: theme.colorScheme.primary.withOpacity(0.2),
-                                      checkmarkColor: theme.colorScheme.primary,
-                                    );
-                                  }).toList(),
-                                ),
-                              ],
+                                  Slider(
+                                    value: state.radiusKm,
+                                    min: 0.5,
+                                    max: 20.0,
+                                    divisions: 39,
+                                    label: "${state.radiusKm.toStringAsFixed(1)} km",
+                                    onChanged: notifier.setRadius,
+                                  ),
+                                  
+                                  const Divider(height: 20),
+                                  
+                                  const Text("Filter", style: TextStyle(fontWeight: FontWeight.bold)),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text("Vegan verfügbar"),
+                                    value: state.isVegan,
+                                    activeColor: theme.colorScheme.primary,
+                                    onChanged: (val) => notifier.toggleVegan(val),
+                                  ),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text("Vegetarisch verfügbar"),
+                                    value: state.isVegetarian,
+                                    activeColor: theme.colorScheme.primary,
+                                    onChanged: (val) => notifier.toggleVegetarian(val),
+                                  ),
+                                  SwitchListTile(
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text("Besuchte ausblenden"),
+                                    subtitle: const Text("Bereits besuchte Orte ausschließen"),
+                                    value: state.excludeVisited,
+                                    activeColor: theme.colorScheme.primary,
+                                    onChanged: (val) => notifier.toggleExcludeVisited(val),
+                                  ),
+  
+                                  const Text("Küche", style: TextStyle(fontWeight: FontWeight.bold)),
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8.0,
+                                    runSpacing: 4.0,
+                                    children: {
+                                      'Italienisch': 'italian',
+                                      'Asiatisch': 'asian',
+                                      'Deutsch': 'german',
+                                      'Chinesisch': 'chinese',
+                                      'Japanisch': 'japanese',
+                                      'Mexikanisch': 'mexican',
+                                      'Indisch': 'indian',
+                                      'Französisch': 'french',
+                                      'Griechisch': 'greek',
+                                      'Amerikanisch': 'american',
+                                      'Burger': 'burger',
+                                      'Pizza': 'pizza',
+                                      'Sushi': 'sushi',
+                                    }.entries.map((entry) {
+                                      final isSelected = state.selectedCuisines.contains(entry.value);
+                                      return FilterChip(
+                                        label: Text(entry.key),
+                                        selected: isSelected,
+                                        onSelected: (_) => notifier.toggleCuisine(entry.value),
+                                        selectedColor: theme.colorScheme.primary.withOpacity(0.2),
+                                        checkmarkColor: theme.colorScheme.primary,
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
