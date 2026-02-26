@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'services/notification_service.dart';
-import 'firebase_options.dart';
 import 'widgets/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
+  await Supabase.initialize(
+    url: 'https://kashnqsqrltdhehjrzzt.supabase.co',
+    anonKey: 'sb_publishable_TTahnRlQFFqx1E2OHFEhKQ_gtd7P_G0',
   );
 
   // Initialize Notifications

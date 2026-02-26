@@ -1,13 +1,24 @@
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 class AuthService {
-  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final SupabaseClient _supabase = Supabase.instance.client;
+
+  // TODO: Trage hier deine Web Client ID aus der Google Cloud Console ein.
+  // Das ist NICHT die Android-Client-ID.
+  final String _webClientId = '882794991997-aupn8mghfid3eciabjf4c8s3m4sdvs76.apps.googleusercontent.com';
+
+  late final GoogleSignIn _googleSignIn;
+
+  AuthService() {
+    _googleSignIn = GoogleSignIn(
+      serverClientId: _webClientId,
+    );
+  }
 
   // Stream, um den Auth-Status zu überwachen
-  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+  Stream<User?> get authStateChanges => _supabase.auth.onAuthStateChange.map((event) => event.session?.user);
 
   // Google Sign-In
   Future<User?> signInWithGoogle() async {
@@ -19,18 +30,23 @@ class AuthService {
       }
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final OAuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      final accessToken = googleAuth.accessToken;
+      final idToken = googleAuth.idToken;
+
+      if (idToken == null) {
+        print("Kein ID Token erhalten.");
+        return null;
+      }
+
+      final AuthResponse response = await _supabase.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        accessToken: accessToken,
       );
 
-      final UserCredential userCredential = await _firebaseAuth.signInWithCredential(credential);
-      return userCredential.user;
-    } on FirebaseAuthException catch (e) {
-      print("Firebase Auth Fehler: ${e.message}");
-      return null;
+      return response.user;
     } catch (e) {
-      print("Ein anderer Fehler ist aufgetreten: $e");
+      print("Google Sign-In Fehler: $e");
       return null;
     }
   }
@@ -38,7 +54,7 @@ class AuthService {
   // Sign Out
   Future<void> signOut() async {
     await _googleSignIn.signOut();
-    await _firebaseAuth.signOut();
+    await _supabase.auth.signOut();
   }
 }
 

@@ -1,5 +1,4 @@
-import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/restaurant.dart';
 
 class DatabaseService {
@@ -7,94 +6,83 @@ class DatabaseService {
   factory DatabaseService() => _instance;
   DatabaseService._internal();
 
-  static Database? _database;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDB();
-    return _database!;
-  }
-
-  Future<Database> _initDB() async {
-    String path = join(await getDatabasesPath(), 'restaurant_roulette.db');
-    return await openDatabase(
-      path,
-      version: 2,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE visited_restaurants(
-            id TEXT PRIMARY KEY,
-            name TEXT,
-            address TEXT,
-            visited_at TEXT,
-            rating INTEGER,
-            popup_dismissed INTEGER DEFAULT 0
-          )
-        ''');
-      },
-      onUpgrade: (db, oldVersion, newVersion) async {
-        if (oldVersion < 2) {
-          await db.execute('ALTER TABLE visited_restaurants ADD COLUMN rating INTEGER');
-          await db.execute('ALTER TABLE visited_restaurants ADD COLUMN popup_dismissed INTEGER DEFAULT 0');
-        }
-      },
-    );
-  }
+  String? get _userId => _supabase.auth.currentUser?.id;
 
   Future<void> addVisitedRestaurant(Restaurant restaurant) async {
-    final db = await database;
-    await db.insert(
-      'visited_restaurants',
-      {
+    if (_userId == null) return;
+    
+    await _supabase.from('visited_restaurants').upsert({
         'id': restaurant.id,
+        'user_id': _userId,
         'name': restaurant.name,
         'address': restaurant.address,
         'visited_at': DateTime.now().toIso8601String(),
         'rating': restaurant.userRating,
         'popup_dismissed': restaurant.popupDismissed ? 1 : 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    });
   }
 
   Future<List<Restaurant>> getVisitedRestaurants() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('visited_restaurants', orderBy: 'visited_at DESC');
-    return maps.map((e) => Restaurant.fromMap(e)).toList();
+    if (_userId == null) return [];
+    
+    final response = await _supabase
+      .from('visited_restaurants')
+      .select()
+      .order('visited_at', ascending: false);
+
+    final List<Restaurant> restaurants = [];
+    for (var row in response) {
+      // Create map mimicking the original API or SQFlite structure
+      final map = {
+        'id': row['id'],
+        'name': row['name'],
+        'address': row['address'],
+        'visited_at': row['visited_at'],
+        'rating': row['rating'],
+        'popup_dismissed': row['popup_dismissed'],
+      };
+      
+      restaurants.add(Restaurant.fromMap(map));
+    }
+    return restaurants;
   }
 
   Future<Set<String>> getVisitedRestaurantIds() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query('visited_restaurants');
-    return maps.map((e) => e['id'] as String).toSet();
+    if (_userId == null) return {};
+    
+    final response = await _supabase
+      .from('visited_restaurants')
+      .select('id');
+      
+    return response.map((e) => e['id'] as String).toSet();
   }
 
   Future<void> updateRating(String id, int rating) async {
-    final db = await database;
-    await db.update(
-      'visited_restaurants',
-      {'rating': rating},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    if (_userId == null) return;
+
+    await _supabase
+      .from('visited_restaurants')
+      .update({'rating': rating})
+      .eq('id', id);
   }
 
   Future<void> markPopupDismissed(String id) async {
-    final db = await database;
-    await db.update(
-      'visited_restaurants',
-      {'popup_dismissed': 1},
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    if (_userId == null) return;
+
+    await _supabase
+      .from('visited_restaurants')
+      .update({'popup_dismissed': 1})
+      .eq('id', id);
   }
 
   Future<void> removeVisitedRestaurant(String id) async {
-    final db = await database;
-    await db.delete(
-      'visited_restaurants',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    if (_userId == null) return;
+
+    await _supabase
+      .from('visited_restaurants')
+      .delete()
+      .eq('id', id);
   }
 }
