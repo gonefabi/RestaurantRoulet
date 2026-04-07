@@ -133,7 +133,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _isSpinning = true;
         });
         
-        Future.delayed(const Duration(seconds: 5), () {
+        Future.delayed(const Duration(seconds: 8), () {
           if (mounted) {
             setState(() {
               _isSpinning = false;
@@ -592,44 +592,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ),
             ),
             
-            // Lieferando/Uber Eats Buttons - IMMER sichtbar
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () async {
-                  final success = await notifier.searchOnLieferando();
-                  if (success && mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            const Icon(Icons.content_copy, color: Colors.white),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                '"${state.selectedRestaurant?.name}" in Zwischenablage kopiert',
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: Colors.green,
-                        duration: const Duration(seconds: 4),
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.delivery_dining, color: Colors.white),
-                label: const Text("AUF LIEFERANDO SUCHEN", style: TextStyle(color: Colors.white)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange, // Lieferando Orange
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-
             // Status "Bereits besucht"
             if (state.visitedIds.contains(state.selectedRestaurant!.id))
               Padding(
