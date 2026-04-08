@@ -27,6 +27,10 @@ class _RatingPopupState extends State<RatingPopup> {
     _rating = widget.restaurant.userRating ?? 0;
   }
 
+  String _formatDate(DateTime date) {
+    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Dialog(
@@ -57,6 +61,14 @@ class _RatingPopupState extends State<RatingPopup> {
                 style: const TextStyle(fontSize: 14, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
+            if (widget.restaurant.visitedAt != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Besucht am: ${_formatDate(widget.restaurant.visitedAt!)}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,

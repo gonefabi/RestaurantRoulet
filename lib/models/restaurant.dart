@@ -11,6 +11,7 @@ class Restaurant {
   final String? street;
   final String? city;
   final double rating;
+  final int visitCount;
 
   Restaurant({
     required this.id,
@@ -22,6 +23,7 @@ class Restaurant {
     this.visitedAt,
     this.userRating,
     this.popupDismissed = false,
+    this.visitCount = 1,
   });
 
   // Factory für Geoapify API
@@ -48,7 +50,8 @@ class Restaurant {
       popupDismissed: map['popup_dismissed'] == 1,
       street: map['street'],
       city: map['city'],
-      rating: map['api_rating'] ?? 0.0, // distinction for db
+      rating: map['api_rating'] ?? 0.0,
+      visitCount: map['visit_count'] ?? 1,
     );
   }
 
@@ -62,6 +65,7 @@ class Restaurant {
     DateTime? visitedAt,
     int? userRating,
     bool? popupDismissed,
+    int? visitCount,
   }) {
     return Restaurant(
       id: id ?? this.id,
@@ -73,6 +77,7 @@ class Restaurant {
       visitedAt: visitedAt ?? this.visitedAt,
       userRating: userRating ?? this.userRating,
       popupDismissed: popupDismissed ?? this.popupDismissed,
+      visitCount: visitCount ?? this.visitCount,
     );
   }
 

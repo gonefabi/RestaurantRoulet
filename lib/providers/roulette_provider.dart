@@ -137,8 +137,17 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
     // Automatisch als besucht markieren
     await markAsVisited(restaurant);
-    
-    final destination = Uri.encodeComponent("${restaurant.name}, ${restaurant.address ?? ''}");
+
+    await _openMapsNavigation(restaurant.name, restaurant.address);
+  }
+
+  /// Öffnet Google Maps Navigation zu einem beliebigen Restaurant (z.B. aus der History)
+  Future<void> navigateToRestaurant(Restaurant restaurant) async {
+    await _openMapsNavigation(restaurant.name, restaurant.address);
+  }
+
+  Future<void> _openMapsNavigation(String name, String? address) async {
+    final destination = Uri.encodeComponent("$name, ${address ?? ''}");
     final googleMapsUrl = Uri.parse(
       "https://www.google.com/maps/dir/?api=1&destination=$destination&travelmode=driving",
     );
