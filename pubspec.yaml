@@ -1,7 +1,7 @@
 name: restaurant_roulette
 description: A hybrid-api restaurant finder app.
 publish_to: 'none'
-version: 1.0.5+6
+version: 1.2.0+7
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -47,6 +47,14 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib/assets/icon/app_icon.png"
+  adaptive_icon_background: "#1a2332"
+  adaptive_icon_foreground: "lib/assets/icon/app_icon.png"
 
 flutter:
   uses-material-design: true
