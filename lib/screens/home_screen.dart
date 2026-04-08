@@ -8,6 +8,7 @@ import '../widgets/roulette_wheel.dart';
 import '../widgets/loading_animation.dart';
 import 'visited_restaurants_screen.dart';
 import 'notification_settings_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../widgets/rating_popup.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
@@ -312,6 +313,25 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                     context,
                                     MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
                                   );
+                                },
+                              ),
+                              const Divider(),
+                              ListTile(
+                                leading: const Icon(Icons.privacy_tip),
+                                title: const Text("Datenschutz"),
+                                dense: true,
+                                onTap: () {
+                                  setState(() => _showProfile = false);
+                                  launchUrl(Uri.parse('https://gonefabi.github.io/RestaurantRoulet/datenschutz.html'), mode: LaunchMode.externalApplication);
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.info_outline),
+                                title: const Text("Impressum"),
+                                dense: true,
+                                onTap: () {
+                                  setState(() => _showProfile = false);
+                                  launchUrl(Uri.parse('https://gonefabi.github.io/RestaurantRoulet/impressum.html'), mode: LaunchMode.externalApplication);
                                 },
                               ),
                             ],
