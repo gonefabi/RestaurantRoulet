@@ -2,10 +2,7 @@
     <!-- Internetberechtigung -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
-    <!-- Werbe-ID Berechtigung (WICHTIG für Google Play Console) -->
-    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
-
-    <!-- Standortberechtigungen -->
+<!-- Standortberechtigungen -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
@@ -40,10 +37,6 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- Google Mobile Ads Konfiguration -->
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
     </application>
     <queries>
         <intent>

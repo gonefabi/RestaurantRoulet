@@ -1,7 +1,7 @@
 name: restaurant_roulette
 description: A hybrid-api restaurant finder app.
 publish_to: 'none'
-version: 1.2.0+8
+version: 1.2.0+9
 
 environment:
   sdk: '>=3.2.0 <4.0.0'
@@ -36,9 +36,6 @@ dependencies:
   url_launcher: ^6.2.4 # NEU: Für Google Maps
   rxdart: ^0.27.7
   equatable: ^2.0.5
-  
-  # Ads
-  google_mobile_ads: ^4.0.0
   flutter_local_notifications: ^20.1.0
   timezone: ^0.10.1
   shared_preferences: ^2.5.3
