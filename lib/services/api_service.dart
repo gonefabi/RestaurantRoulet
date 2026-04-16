@@ -18,6 +18,19 @@ class SearchFilters {
   });
 }
 
+/// Treffer der Geoapify-Geocoding-Suche, dient als manueller Standort-Fallback.
+class GeocodingResult {
+  final double lat;
+  final double lng;
+  final String formatted;
+
+  const GeocodingResult({
+    required this.lat,
+    required this.lng,
+    required this.formatted,
+  });
+}
+
 class ApiService {
   final Dio _dio;
   final String _geoapifyApiKey = ApiKeys.geoapifyKey;
@@ -75,6 +88,45 @@ class ApiService {
     } catch (e) {
       print('Allgemeiner API Fehler: $e');
       throw Exception('Unbekannter Fehler bei der Abfrage.');
+    }
+  }
+
+  // --- Adresssuche / Geocoding (Fallback bei GPS-Problemen) ---
+  Future<List<GeocodingResult>> geocodeAddress(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return [];
+
+    const url = 'https://api.geoapify.com/v1/geocode/search';
+    final queryParams = {
+      'text': trimmed,
+      'limit': 5,
+      'lang': 'de',
+      'apiKey': _geoapifyApiKey,
+    };
+
+    try {
+      final response = await _dio.get(url, queryParameters: queryParams);
+      if (response.statusCode != 200 || response.data['features'] == null) {
+        return [];
+      }
+
+      final features = response.data['features'] as List;
+      return features
+          .map((feature) {
+            final coords = feature['geometry']?['coordinates'] as List?;
+            final props = feature['properties'] as Map<String, dynamic>?;
+            if (coords == null || coords.length < 2 || props == null) return null;
+            final lng = (coords[0] as num).toDouble();
+            final lat = (coords[1] as num).toDouble();
+            final formatted = (props['formatted'] as String?) ?? trimmed;
+            return GeocodingResult(lat: lat, lng: lng, formatted: formatted);
+          })
+          .whereType<GeocodingResult>()
+          .toList();
+    } on DioException catch (e) {
+      throw Exception('Adresssuche fehlgeschlagen: ${e.message}');
+    } catch (e) {
+      throw Exception('Adresssuche fehlgeschlagen.');
     }
   }
 }
