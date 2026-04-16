@@ -49,7 +49,7 @@ class Restaurant {
       userRating: map['rating'],
       popupDismissed: map['popup_dismissed'] == 1,
       street: map['street'],
-      city: map['city'],
+      city: map['city'], // kann null sein, wenn Spalte in DB fehlt
       rating: map['api_rating'] ?? 0.0,
       visitCount: map['visit_count'] ?? 1,
     );

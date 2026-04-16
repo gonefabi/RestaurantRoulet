@@ -135,8 +135,12 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
     final restaurant = state.selectedRestaurant;
     if (restaurant == null) return;
 
-    // Automatisch als besucht markieren
-    await markAsVisited(restaurant);
+    // Automatisch als besucht markieren (Fehler ignorieren, damit Navigation trotzdem öffnet)
+    try {
+      await markAsVisited(restaurant);
+    } catch (e) {
+      print("markAsVisited fehlgeschlagen: $e");
+    }
 
     await _openMapsNavigation(restaurant.name, restaurant.address);
   }
@@ -152,11 +156,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
       "https://www.google.com/maps/dir/?api=1&destination=$destination&travelmode=driving",
     );
 
-    if (await canLaunchUrl(googleMapsUrl)) {
-      await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-    } else {
-      print("Konnte Karten-App nicht öffnen: $googleMapsUrl");
-    }
+    await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
   }
   
 
