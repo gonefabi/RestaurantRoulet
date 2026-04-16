@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart'; 
 import '../models/restaurant.dart';
-import '../models/place_suggestion.dart';
 import '../services/api_service.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
@@ -17,9 +16,7 @@ class RouletteState {
   final String? error;
   final Position? currentPosition;
   final double radiusKm;
-  final bool isUsingCustomLocation;
-  final List<PlaceSuggestion> addressSuggestions;
- 
+
   final List<String> selectedCuisines;
   final bool isVegan; // Wieder hinzugefügt
   final bool isVegetarian;
@@ -32,9 +29,7 @@ class RouletteState {
     this.selectedRestaurant,
     this.error,
     this.currentPosition,
-    this.radiusKm = 2.0, 
-    this.isUsingCustomLocation = false,
-    this.addressSuggestions = const [],
+    this.radiusKm = 2.0,
     this.selectedCuisines = const [],
     this.isVegan = false, // Wieder hinzugefügt
     this.isVegetarian = false,
@@ -50,8 +45,6 @@ class RouletteState {
     Position? currentPosition,
     double? radiusKm,
     bool clearSelectedRestaurant = false,
-    bool? isUsingCustomLocation,
-    List<PlaceSuggestion>? addressSuggestions,
     List<String>? selectedCuisines,
     bool? isVegan, // Wieder hinzugefügt
     bool? isVegetarian,
@@ -65,8 +58,6 @@ class RouletteState {
       error: error,
       currentPosition: currentPosition ?? this.currentPosition,
       radiusKm: radiusKm ?? this.radiusKm,
-      isUsingCustomLocation: isUsingCustomLocation ?? this.isUsingCustomLocation,
-      addressSuggestions: addressSuggestions ?? this.addressSuggestions,
       selectedCuisines: selectedCuisines ?? this.selectedCuisines,
       isVegan: isVegan ?? this.isVegan, // Wieder hinzugefügt
       isVegetarian: isVegetarian ?? this.isVegetarian,
@@ -161,68 +152,11 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
   
 
 
-  // --- Adress-Suche ---
-  Future<void> searchAddress(String query) async {
-    if (query.length < 3) {
-      state = state.copyWith(addressSuggestions: []);
-      return;
-    }
-
-    try {
-      final suggestions = await _apiService.searchPlaces(query);
-      state = state.copyWith(addressSuggestions: suggestions);
-    } catch (e) {
-      print("Autocomplete Fehler: $e");
-    }
-  }
-
-  void selectAddress(PlaceSuggestion place) {
-    final newPosition = Position(
-      longitude: place.lng,
-      latitude: place.lat,
-      timestamp: DateTime.now(),
-      accuracy: 0,
-      altitude: 0,
-      altitudeAccuracy: 0,
-      heading: 0,
-      headingAccuracy: 0,
-      speed: 0,
-      speedAccuracy: 0,
-    );
-
-    state = state.copyWith(
-      currentPosition: newPosition,
-      isUsingCustomLocation: true,
-      addressSuggestions: [],
-      restaurants: [],
-      clearSelectedRestaurant: true,
-    );
-  }
-
-  Future<void> useCurrentLocation() async {
-    state = state.copyWith(isLoading: true);
-    try {
-      final position = await _determinePosition();
-      state = state.copyWith(
-        currentPosition: position,
-        isUsingCustomLocation: false,
-        isLoading: false,
-        restaurants: [],
-        clearSelectedRestaurant: true,
-      );
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: "Standortfehler: $e");
-    }
-  }
-
   // --- GPS ---
   Future<void> updateLocation() async {
     try {
       final position = await _determinePosition();
-      state = state.copyWith(
-        currentPosition: position,
-        isUsingCustomLocation: false,
-      );
+      state = state.copyWith(currentPosition: position);
     } catch (e) {
       state = state.copyWith(error: "Standortfehler: $e");
     }

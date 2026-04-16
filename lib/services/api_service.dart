@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_keys.dart';
 import '../models/restaurant.dart';
-import '../models/place_suggestion.dart';
 
 // Einfache Filter für die Geoapify-Suche
 class SearchFilters {
@@ -24,31 +23,6 @@ class ApiService {
   final String _geoapifyApiKey = ApiKeys.geoapifyKey;
 
   ApiService(this._dio);
-
-  // --- Adress-Suche (Autocomplete) ---
-  Future<List<PlaceSuggestion>> searchPlaces(String query) async {
-    if (query.length < 3) return []; 
-
-    const url = 'https://api.geoapify.com/v1/geocode/autocomplete';
-    
-    try {
-      final response = await _dio.get(url, queryParameters: {
-        'text': query,
-        'apiKey': _geoapifyApiKey,
-        'limit': 5, 
-        'lang': 'de', 
-      });
-
-      if (response.statusCode == 200 && response.data['features'] != null) {
-        final features = response.data['features'] as List;
-        return features.map((f) => PlaceSuggestion.fromJson(f)).toList();
-      }
-      return [];
-    } catch (e) {
-      print('Autocomplete Fehler: $e');
-      return [];
-    }
-  }
 
   // --- Restaurant-Suche (Nur Geoapify) ---
   Future<List<Restaurant>> fetchRestaurants({
