@@ -14,7 +14,9 @@ class RouletteState {
   final List<Restaurant> restaurants;
   final Restaurant? selectedRestaurant;
   final String? error;
+  final String? locationError;
   final Position? currentPosition;
+  final String? manualLocationLabel;
   final double radiusKm;
 
   final List<String> selectedCuisines;
@@ -28,7 +30,9 @@ class RouletteState {
     this.restaurants = const [],
     this.selectedRestaurant,
     this.error,
+    this.locationError,
     this.currentPosition,
+    this.manualLocationLabel,
     this.radiusKm = 2.0,
     this.selectedCuisines = const [],
     this.isVegan = false, // Wieder hinzugefügt
@@ -42,7 +46,10 @@ class RouletteState {
     List<Restaurant>? restaurants,
     Restaurant? selectedRestaurant,
     String? error,
+    String? locationError,
     Position? currentPosition,
+    String? manualLocationLabel,
+    bool clearManualLocationLabel = false,
     double? radiusKm,
     bool clearSelectedRestaurant = false,
     List<String>? selectedCuisines,
@@ -56,7 +63,9 @@ class RouletteState {
       restaurants: restaurants ?? this.restaurants,
       selectedRestaurant: clearSelectedRestaurant ? null : selectedRestaurant ?? this.selectedRestaurant,
       error: error,
+      locationError: locationError,
       currentPosition: currentPosition ?? this.currentPosition,
+      manualLocationLabel: clearManualLocationLabel ? null : (manualLocationLabel ?? this.manualLocationLabel),
       radiusKm: radiusKm ?? this.radiusKm,
       selectedCuisines: selectedCuisines ?? this.selectedCuisines,
       isVegan: isVegan ?? this.isVegan, // Wieder hinzugefügt
@@ -156,10 +165,38 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
   Future<void> updateLocation() async {
     try {
       final position = await _determinePosition();
-      state = state.copyWith(currentPosition: position);
+      state = state.copyWith(
+        currentPosition: position,
+        clearManualLocationLabel: true,
+      );
     } catch (e) {
-      state = state.copyWith(error: "Standortfehler: $e");
+      state = state.copyWith(locationError: e.toString());
     }
+  }
+
+  /// Übernimmt einen vom Nutzer gewählten Adress-Treffer als aktuellen Standort
+  /// (Fallback, wenn GPS verweigert/deaktiviert ist oder bewusst woanders gesucht wird).
+  void setManualLocation(GeocodingResult result) {
+    final position = Position(
+      latitude: result.lat,
+      longitude: result.lng,
+      timestamp: DateTime.now(),
+      accuracy: 0,
+      altitude: 0,
+      altitudeAccuracy: 0,
+      heading: 0,
+      headingAccuracy: 0,
+      speed: 0,
+      speedAccuracy: 0,
+    );
+    state = state.copyWith(
+      currentPosition: position,
+      manualLocationLabel: result.formatted,
+    );
+  }
+
+  Future<List<GeocodingResult>> searchAddress(String query) {
+    return _apiService.geocodeAddress(query);
   }
 
   void setRadius(double km) {
@@ -175,9 +212,9 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
       if (state.currentPosition == null) {
         await updateLocation();
       }
-      
+
       if (state.currentPosition == null) {
-        throw Exception("Kein Standort ausgewählt.");
+        throw Exception(state.locationError ?? "Kein Standort ausgewählt.");
       }
 
       final filters = SearchFilters(
