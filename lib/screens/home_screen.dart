@@ -23,7 +23,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final MapController _mapController = MapController();
-  final TextEditingController _searchController = TextEditingController();
   final NotificationService _notificationService = NotificationService();
   final DatabaseService _dbService = DatabaseService();
   bool _showSettings = false;
@@ -201,8 +200,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       width: 50,
                       height: 50,
                       child: Icon(
-                        state.isUsingCustomLocation ? Icons.location_on : Icons.my_location, 
-                        color: state.isUsingCustomLocation ? Colors.deepOrange : theme.colorScheme.primary,
+                        Icons.my_location,
+                        color: theme.colorScheme.primary,
                         size: 40,
                         shadows: const [Shadow(color: Colors.black26, blurRadius: 4)],
                       ),
@@ -366,10 +365,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         if (_showSettings && _showProfile) {
                            _showProfile = false;
                         }
-                        if (!_showSettings) {
-                          _searchController.clear();
-                          notifier.searchAddress(""); 
-                        }
                       });
                     },
                   ),
@@ -394,57 +389,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Text("Anderen Ort suchen", style: TextStyle(fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 8),
-                                  TextField(
-                                    controller: _searchController,
-                                    decoration: InputDecoration(
-                                      hintText: "Stadt oder Adresse...",
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                      suffixIcon: _searchController.text.isNotEmpty 
-                                        ? IconButton(icon: const Icon(Icons.clear), onPressed: () {
-                                          _searchController.clear();
-                                          notifier.searchAddress("");
-                                        }) : const Icon(Icons.search),
-                                    ),
-                                    onChanged: notifier.searchAddress,
-                                  ),
-                                  
-                                  if (state.addressSuggestions.isNotEmpty)
-                                    Container(
-                                      constraints: const BoxConstraints(maxHeight: 150),
-                                      margin: const EdgeInsets.only(top: 8),
-                                      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade300), borderRadius: BorderRadius.circular(8)),
-                                      child: ListView.builder(
-                                        shrinkWrap: true,
-                                        physics: const NeverScrollableScrollPhysics(), // Scroll via parent
-                                        itemCount: state.addressSuggestions.length,
-                                        itemBuilder: (context, index) {
-                                          final place = state.addressSuggestions[index];
-                                          return ListTile(
-                                            title: Text(place.description, maxLines: 2, overflow: TextOverflow.ellipsis),
-                                            onTap: () {
-                                              notifier.selectAddress(place);
-                                              FocusScope.of(context).unfocus();
-                                              _searchController.clear();
-                                              setState(() { _showSettings = false; });
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ),
-  
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 10),
-                                      child: TextButton.icon(
-                                        onPressed: () => notifier.useCurrentLocation(), 
-                                        icon: const Icon(Icons.my_location),
-                                        label: const Text("Meinen Standort verwenden"),
-                                      ),
-                                    ),
-  
-                                  const Divider(height: 20),
-  
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
