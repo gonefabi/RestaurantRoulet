@@ -10,6 +10,7 @@ import 'visited_restaurants_screen.dart';
 import 'notification_settings_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../widgets/rating_popup.dart';
+import '../services/api_service.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
 import '../models/restaurant.dart';
@@ -211,18 +212,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
 
-          // 2. Layer: Bottom Action Button (Moved behind settings menu)
+          // 2. Layer: Bottom Actions (Suchbutton, Standort-Fallback, Fehler)
           if (state.restaurants.isEmpty && !state.isLoading)
-            Positioned(
-              bottom: 40,
-              left: 20,
-              right: 20,
-              child: ElevatedButton.icon(
-                onPressed: () => notifier.loadRestaurants(),
-                icon: const Icon(Icons.casino_outlined, color: Colors.white),
-                label: const Text("Restaurant suchen"),
-              ),
-            ),
+            _buildBottomActions(state, notifier, theme),
 
           // 2.5. Layer: Top Left Profile Menu
           _buildProfileMenu(theme),
@@ -241,13 +233,165 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             Positioned.fill(
               child: _buildRouletteOverlay(context, state, notifier, theme),
             ),
-
-          // 6. Layer: Fehlermeldung
-          if (state.error != null && !state.isLoading && state.restaurants.isEmpty)
-            _buildErrorWidget(state.error!, () => notifier.clearRestaurants()),
         ],
       ),
     );
+  }
+
+  Widget _buildBottomActions(RouletteState state, RouletteNotifier notifier, ThemeData theme) {
+    // Solange noch nicht klar ist, ob wir einen Standort haben (z.B. beim ersten Start)
+    // soll nichts angezeigt werden - die UI würde sonst kurz aufflackern.
+    final hasPosition = state.currentPosition != null;
+    final hasGenericError = state.error != null;
+    final hasLocationError = state.locationError != null;
+
+    if (!hasPosition && (hasLocationError || hasGenericError)) {
+      // GPS nicht verfügbar -> Fallback-Aktionen anbieten.
+      return _buildLocationFallbackPanel(
+        message: state.locationError ?? state.error!,
+        notifier: notifier,
+        theme: theme,
+      );
+    }
+
+    if (hasPosition && hasGenericError) {
+      // Standort vorhanden, aber andere Fehlermeldung (z.B. keine Restaurants).
+      return _buildErrorWidget(state.error!, () => notifier.clearRestaurants());
+    }
+
+    if (!hasPosition) {
+      // Standort wird noch ermittelt -> nichts anzeigen.
+      return const SizedBox.shrink();
+    }
+
+    return Positioned(
+      bottom: 40,
+      left: 20,
+      right: 20,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (state.manualLocationLabel != null)
+            _buildManualLocationChip(state.manualLocationLabel!, notifier, theme),
+          ElevatedButton.icon(
+            onPressed: () => notifier.loadRestaurants(),
+            icon: const Icon(Icons.casino_outlined, color: Colors.white),
+            label: const Text("Restaurant suchen"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationFallbackPanel({
+    required String message,
+    required RouletteNotifier notifier,
+    required ThemeData theme,
+  }) {
+    return Positioned(
+      bottom: 40,
+      left: 20,
+      right: 20,
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 2)),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.location_off, color: theme.colorScheme.error),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      "Standort nicht verfügbar",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(message, style: const TextStyle(color: Colors.black54)),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => notifier.updateLocation(),
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Erneut versuchen"),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showAddressDialog(notifier),
+                      icon: const Icon(Icons.edit_location_alt_outlined),
+                      label: const Text("Adresse"),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildManualLocationChip(String label, RouletteNotifier notifier, ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
+        elevation: 2,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => notifier.updateLocation(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.place, size: 18, color: theme.colorScheme.primary),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    label,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 13),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(Icons.gps_fixed, size: 16, color: theme.colorScheme.primary),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAddressDialog(RouletteNotifier notifier) async {
+    final result = await showDialog<GeocodingResult>(
+      context: context,
+      builder: (_) => _AddressSearchDialog(
+        onSearch: notifier.searchAddress,
+      ),
+    );
+    if (result != null) {
+      notifier.setManualLocation(result);
+    }
   }
 
   Widget _buildProfileMenu(ThemeData theme) {
@@ -632,6 +776,118 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _AddressSearchDialog extends StatefulWidget {
+  final Future<List<GeocodingResult>> Function(String query) onSearch;
+
+  const _AddressSearchDialog({required this.onSearch});
+
+  @override
+  State<_AddressSearchDialog> createState() => _AddressSearchDialogState();
+}
+
+class _AddressSearchDialogState extends State<_AddressSearchDialog> {
+  final TextEditingController _controller = TextEditingController();
+  bool _isLoading = false;
+  String? _error;
+  List<GeocodingResult> _results = [];
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _runSearch() async {
+    final query = _controller.text.trim();
+    if (query.isEmpty) return;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _results = [];
+    });
+    try {
+      final results = await widget.onSearch(query);
+      if (!mounted) return;
+      setState(() {
+        _results = results;
+        _isLoading = false;
+        if (results.isEmpty) _error = "Keine Treffer gefunden.";
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AlertDialog(
+      title: const Text("Adresse eingeben"),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _controller,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _runSearch(),
+              decoration: InputDecoration(
+                hintText: "Stadt, Straße oder Adresse",
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.arrow_forward),
+                  onPressed: _isLoading ? null : _runSearch,
+                ),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            if (_isLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: CircularProgressIndicator(),
+              ),
+            if (_error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(_error!, style: TextStyle(color: theme.colorScheme.error)),
+              ),
+            if (_results.isNotEmpty)
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: _results.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final r = _results[index];
+                    return ListTile(
+                      dense: true,
+                      leading: const Icon(Icons.place_outlined),
+                      title: Text(r.formatted),
+                      onTap: () => Navigator.of(context).pop(r),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text("Abbrechen"),
+        ),
+      ],
     );
   }
 }
