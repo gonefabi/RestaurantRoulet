@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'dart:math';
 import '../providers/roulette_provider.dart';
 import '../widgets/roulette_wheel.dart';
@@ -475,102 +476,205 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildRouletteOverlay(BuildContext context, RouletteState state, RouletteNotifier notifier, ThemeData theme) {
-    return Container(
-      color: theme.scaffoldBackgroundColor.withOpacity(0.95),
-      child: Center(
-        child: SingleChildScrollView( 
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (state.selectedRestaurant == null || _isSpinning)
-                const Text(
-                  "Wähle dein Schicksal!",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              
-              const SizedBox(height: 20),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        const _NeonAmbientBackground(),
+        SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (state.selectedRestaurant == null || _isSpinning)
+                    _NeonTitle(text: "WÄHLE DEIN SCHICKSAL"),
 
-              if (state.selectedRestaurant == null || _isSpinning)
-                RouletteWheelWidget(
-                  restaurants: state.restaurants,
-                  onFinished: (index) {},
-                  onSpin: () {
-                    // Only allow spin if not already spinning and no winner selected (or re-spin logic)
-                    if (!_isSpinning && state.selectedRestaurant == null) {
-                       notifier.selectWinner();
-                    }
-                  },
-                ),
-          
-              const SizedBox(height: 20),
-          
-              if (state.selectedRestaurant != null && !_isSpinning)
-                _buildWinnerCard(state, notifier, theme),
-          
-              const SizedBox(height: 30),
-          
-              _buildControlButtons(state, notifier, theme),
-            ],
+                  const SizedBox(height: 24),
+
+                  if (state.selectedRestaurant == null || _isSpinning)
+                    RouletteWheelWidget(
+                      restaurants: state.restaurants,
+                      onFinished: (index) {},
+                      onSpin: () {
+                        if (!_isSpinning && state.selectedRestaurant == null) {
+                          notifier.selectWinner();
+                        }
+                      },
+                    ),
+
+                  const SizedBox(height: 24),
+
+                  if (state.selectedRestaurant != null && !_isSpinning)
+                    _buildWinnerCard(state, notifier, theme),
+
+                  const SizedBox(height: 28),
+
+                  _buildControlButtons(state, notifier, theme),
+
+                  const SizedBox(height: 24),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 
   Widget _buildWinnerCard(RouletteState state, RouletteNotifier notifier, ThemeData theme) {
-    return Card(
+    const neonCyan = Color(0xFF00F5FF);
+    const neonMagenta = Color(0xFFFF2D95);
+    final visited = state.visitedIds.contains(state.selectedRestaurant!.id);
+
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      elevation: 10,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            Text(
-              "🎉 GEWINNER 🎉",
-              style: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold, letterSpacing: 2),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              state.selectedRestaurant!.name,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            if(state.selectedRestaurant!.address != null)
-              Text(
-                state.selectedRestaurant!.address!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black54, fontSize: 16),
-              ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => notifier.launchGoogleMaps(),
-                icon: const Icon(Icons.navigation_outlined, size: 28),
-                label: const Text("ROUTE STARTEN", style: TextStyle(fontSize: 18)),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: theme.colorScheme.primary,
+      padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF110024), Color(0xFF050010)],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: neonMagenta.withOpacity(0.7), width: 1.4),
+        boxShadow: [
+          BoxShadow(
+            color: neonMagenta.withOpacity(0.45),
+            blurRadius: 26,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: neonCyan.withOpacity(0.28),
+            blurRadius: 40,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: neonCyan,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: neonCyan, blurRadius: 8)],
                 ),
               ),
-            ),
-            
-            // Status "Bereits besucht"
-            if (state.visitedIds.contains(state.selectedRestaurant!.id))
-              Padding(
-                padding: const EdgeInsets.only(top: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.check, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text("Bereits besucht", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+              const SizedBox(width: 10),
+              Text(
+                "TREFFER",
+                style: GoogleFonts.orbitron(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  letterSpacing: 6,
+                  shadows: const [
+                    Shadow(color: neonCyan, blurRadius: 8),
+                    Shadow(color: neonMagenta, blurRadius: 12),
                   ],
                 ),
               ),
+              const SizedBox(width: 10),
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: neonMagenta,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(color: neonMagenta, blurRadius: 8)],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ShaderMask(
+            shaderCallback: (bounds) => const LinearGradient(
+              colors: [neonCyan, neonMagenta],
+            ).createShader(bounds),
+            child: Text(
+              state.selectedRestaurant!.name.toUpperCase(),
+              style: GoogleFonts.orbitron(
+                fontSize: 26,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 1.2,
+                height: 1.1,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          if (state.selectedRestaurant!.address != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              state.selectedRestaurant!.address!,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.rajdhani(
+                color: Colors.white.withOpacity(0.72),
+                fontSize: 15,
+                letterSpacing: 0.6,
+              ),
+            ),
           ],
-        ),
+          const SizedBox(height: 22),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: neonCyan.withOpacity(0.55),
+                  blurRadius: 20,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+            child: ElevatedButton.icon(
+              onPressed: () => notifier.launchGoogleMaps(),
+              icon: const Icon(Icons.navigation_outlined, size: 24, color: Colors.black),
+              label: Text(
+                "ROUTE STARTEN",
+                style: GoogleFonts.orbitron(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                  letterSpacing: 2,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: neonCyan,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ),
+          if (visited)
+            Padding(
+              padding: const EdgeInsets.only(top: 14.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.verified, color: Color(0xFFB8FF3C), size: 18),
+                  const SizedBox(width: 8),
+                  Text(
+                    "BEREITS BESUCHT",
+                    style: GoogleFonts.rajdhani(
+                      color: const Color(0xFFB8FF3C),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -579,37 +683,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_isSpinning) return const SizedBox.shrink();
 
     if (state.selectedRestaurant == null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // "DREHEN" button removed as we have a central spin button now
-          TextButton(
-            onPressed: notifier.clearRestaurants,
-            child: const Text("Abbrechen", style: TextStyle(fontSize: 16)),
-          ),
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: notifier.selectWinner,
-                icon: const Icon(Icons.replay),
-                label: const Text("Nochmal drehen"),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          TextButton(
-            onPressed: notifier.clearRestaurants,
-            child: const Text("Neue Suche starten"),
-          ),
-        ],
+      return _NeonGhostButton(
+        label: "ABBRECHEN",
+        icon: Icons.close,
+        onTap: notifier.clearRestaurants,
       );
     }
+
+    return Column(
+      children: [
+        _NeonOutlineButton(
+          label: "NOCHMAL DREHEN",
+          icon: Icons.replay,
+          onTap: notifier.selectWinner,
+        ),
+        const SizedBox(height: 12),
+        _NeonGhostButton(
+          label: "NEUE SUCHE STARTEN",
+          icon: Icons.restart_alt,
+          onTap: notifier.clearRestaurants,
+        ),
+      ],
+    );
   }
 
   Widget _buildErrorWidget(String error, VoidCallback onClose) {
@@ -631,6 +726,228 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _NeonAmbientBackground extends StatefulWidget {
+  const _NeonAmbientBackground();
+
+  @override
+  State<_NeonAmbientBackground> createState() => _NeonAmbientBackgroundState();
+}
+
+class _NeonAmbientBackgroundState extends State<_NeonAmbientBackground>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(seconds: 18),
+  )..repeat();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: RadialGradient(
+          center: Alignment.center,
+          radius: 1.2,
+          colors: [
+            Color(0xFF1B0036),
+            Color(0xFF0A0014),
+            Color(0xFF04000A),
+          ],
+          stops: [0.0, 0.55, 1.0],
+        ),
+      ),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: _NeonGridPainter(progress: _controller.value),
+            size: Size.infinite,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _NeonGridPainter extends CustomPainter {
+  final double progress;
+
+  _NeonGridPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final horizonY = size.height * 0.62;
+
+    final skyGradient = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0x00000000), Color(0x33FF2D95)],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, horizonY));
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, horizonY), skyGradient);
+
+    final horizonLine = Paint()
+      ..color = const Color(0xFF00F5FF).withOpacity(0.55)
+      ..strokeWidth = 1.4
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+    canvas.drawLine(
+      Offset(0, horizonY),
+      Offset(size.width, horizonY),
+      horizonLine,
+    );
+
+    final linePaint = Paint()
+      ..color = const Color(0xFFFF2D95).withOpacity(0.35)
+      ..strokeWidth = 1.0;
+
+    final scroll = progress;
+    for (int i = 0; i < 12; i++) {
+      final t = ((i / 12.0) + scroll) % 1.0;
+      final eased = t * t;
+      final y = horizonY + eased * (size.height - horizonY);
+      linePaint.color = const Color(0xFFFF2D95).withOpacity(0.12 + eased * 0.35);
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    final vanish = Offset(size.width / 2, horizonY);
+    final vPaint = Paint()
+      ..color = const Color(0xFF00F5FF).withOpacity(0.28)
+      ..strokeWidth = 1.0;
+    for (int i = -6; i <= 6; i++) {
+      final dx = size.width / 2 + i * (size.width / 6);
+      canvas.drawLine(vanish, Offset(dx, size.height), vPaint);
+    }
+
+    final starPaint = Paint()..color = Colors.white.withOpacity(0.65);
+    final rng = Random(42);
+    for (int i = 0; i < 40; i++) {
+      final x = rng.nextDouble() * size.width;
+      final y = rng.nextDouble() * horizonY * 0.95;
+      final twinkle =
+          0.3 + 0.7 * ((sin(progress * 2 * pi + i) + 1) / 2);
+      starPaint.color = Colors.white.withOpacity(0.25 + 0.35 * twinkle);
+      canvas.drawCircle(Offset(x, y), rng.nextDouble() * 1.2 + 0.3, starPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _NeonGridPainter oldDelegate) =>
+      oldDelegate.progress != progress;
+}
+
+class _NeonTitle extends StatelessWidget {
+  final String text;
+  const _NeonTitle({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: ShaderMask(
+        shaderCallback: (bounds) => const LinearGradient(
+          colors: [Color(0xFF00F5FF), Color(0xFFFF2D95)],
+        ).createShader(bounds),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.orbitron(
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+            color: Colors.white,
+            letterSpacing: 6,
+            shadows: const [
+              Shadow(color: Color(0xFF00F5FF), blurRadius: 12),
+              Shadow(color: Color(0xFFFF2D95), blurRadius: 18),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NeonOutlineButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _NeonOutlineButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const cyan = Color(0xFF00F5FF);
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(color: cyan.withOpacity(0.45), blurRadius: 18),
+        ],
+      ),
+      child: OutlinedButton.icon(
+        onPressed: onTap,
+        icon: Icon(icon, color: cyan),
+        label: Text(
+          label,
+          style: GoogleFonts.orbitron(
+            color: cyan,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 2,
+            fontSize: 13,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+          side: const BorderSide(color: cyan, width: 1.4),
+          backgroundColor: const Color(0xFF0A0014).withOpacity(0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NeonGhostButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  const _NeonGhostButton({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, color: Colors.white.withOpacity(0.75), size: 18),
+      label: Text(
+        label,
+        style: GoogleFonts.orbitron(
+          color: Colors.white.withOpacity(0.78),
+          fontWeight: FontWeight.w700,
+          letterSpacing: 2,
+          fontSize: 12,
+        ),
+      ),
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
       ),
     );
   }
