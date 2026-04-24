@@ -474,103 +474,241 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           );
   }
 
-  Widget _buildRouletteOverlay(BuildContext context, RouletteState state, RouletteNotifier notifier, ThemeData theme) {
-    return Container(
-      color: theme.scaffoldBackgroundColor.withOpacity(0.95),
-      child: Center(
-        child: SingleChildScrollView( 
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              if (state.selectedRestaurant == null || _isSpinning)
-                const Text(
-                  "Wähle dein Schicksal!",
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-              
-              const SizedBox(height: 20),
+  // --- Roulette overlay theming (scoped to this page only) ---
+  static const Color _rouletteVoid = Color(0xFF05010F);
+  static const Color _rouletteDeep = Color(0xFF0D0522);
+  static const Color _rouletteNeonCyan = Color(0xFF00F0FF);
+  static const Color _rouletteNeonMagenta = Color(0xFFFF1FA8);
+  static const Color _rouletteNeonLime = Color(0xFFB6FF3C);
 
-              if (state.selectedRestaurant == null || _isSpinning)
-                RouletteWheelWidget(
-                  restaurants: state.restaurants,
-                  onFinished: (index) {},
-                  onSpin: () {
-                    // Only allow spin if not already spinning and no winner selected (or re-spin logic)
-                    if (!_isSpinning && state.selectedRestaurant == null) {
-                       notifier.selectWinner();
-                    }
-                  },
-                ),
-          
-              const SizedBox(height: 20),
-          
-              if (state.selectedRestaurant != null && !_isSpinning)
-                _buildWinnerCard(state, notifier, theme),
-          
-              const SizedBox(height: 30),
-          
-              _buildControlButtons(state, notifier, theme),
-            ],
+  Widget _buildRouletteOverlay(BuildContext context, RouletteState state, RouletteNotifier notifier, ThemeData theme) {
+    return Stack(
+      children: [
+        // Deep-space radial backdrop
+        Container(
+          decoration: const BoxDecoration(
+            gradient: RadialGradient(
+              center: Alignment.center,
+              radius: 1.1,
+              colors: [Color(0xFF1A0A3B), _rouletteDeep, _rouletteVoid],
+              stops: [0.0, 0.55, 1.0],
+            ),
           ),
         ),
-      ),
+        // Subtle HUD grid overlay
+        const Positioned.fill(
+          child: IgnorePointer(
+            child: CustomPaint(
+              painter: _RouletteGridPainter(),
+            ),
+          ),
+        ),
+        Center(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (state.selectedRestaurant == null || _isSpinning)
+                  Column(
+                    children: [
+                      Text(
+                        _isSpinning ? "LOCKING TARGET" : "CHOOSE YOUR FATE",
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4.5,
+                          color: _isSpinning ? _rouletteNeonMagenta : _rouletteNeonCyan,
+                          shadows: [
+                            Shadow(
+                              color: (_isSpinning ? _rouletteNeonMagenta : _rouletteNeonCyan).withOpacity(0.7),
+                              blurRadius: 18,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        _isSpinning ? "// rolling the dice" : "// ${state.restaurants.length} targets in range",
+                        style: TextStyle(
+                          fontSize: 11,
+                          letterSpacing: 2.5,
+                          color: Colors.white.withOpacity(0.55),
+                          fontFamily: 'monospace',
+                        ),
+                      ),
+                    ],
+                  ),
+
+                const SizedBox(height: 18),
+
+                if (state.selectedRestaurant == null || _isSpinning)
+                  RouletteWheelWidget(
+                    restaurants: state.restaurants,
+                    onFinished: (index) {},
+                    onSpin: () {
+                      if (!_isSpinning && state.selectedRestaurant == null) {
+                         notifier.selectWinner();
+                      }
+                    },
+                  ),
+
+                const SizedBox(height: 20),
+
+                if (state.selectedRestaurant != null && !_isSpinning)
+                  _buildWinnerCard(state, notifier, theme),
+
+                const SizedBox(height: 24),
+
+                _buildControlButtons(state, notifier, theme),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildWinnerCard(RouletteState state, RouletteNotifier notifier, ThemeData theme) {
-    return Card(
+    final isVisited = state.visitedIds.contains(state.selectedRestaurant!.id);
+    return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
-      elevation: 10,
-      child: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: Column(
-          children: [
-            Text(
-              "🎉 GEWINNER 🎉",
-              style: TextStyle(color: theme.colorScheme.secondary, fontWeight: FontWeight.bold, letterSpacing: 2),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              state.selectedRestaurant!.name,
-              style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 12),
-            if(state.selectedRestaurant!.address != null)
-              Text(
-                state.selectedRestaurant!.address!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black54, fontSize: 16),
-              ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => notifier.launchGoogleMaps(),
-                icon: const Icon(Icons.navigation_outlined, size: 28),
-                label: const Text("ROUTE STARTEN", style: TextStyle(fontSize: 18)),
-                style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  backgroundColor: theme.colorScheme.primary,
-                ),
-              ),
-            ),
-            
-            // Status "Bereits besucht"
-            if (state.visitedIds.contains(state.selectedRestaurant!.id))
-              Padding(
-                padding: const EdgeInsets.only(top: 12.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.check, color: Colors.green),
-                    SizedBox(width: 8),
-                    Text("Bereits besucht", style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
+      padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF120A2A), _rouletteVoid],
+        ),
+        border: Border.all(color: _rouletteNeonCyan.withOpacity(0.85), width: 1.4),
+        borderRadius: BorderRadius.circular(4),
+        boxShadow: [
+          BoxShadow(
+            color: _rouletteNeonCyan.withOpacity(0.35),
+            blurRadius: 28,
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: _rouletteNeonMagenta.withOpacity(0.18),
+            blurRadius: 40,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: _rouletteNeonLime,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(color: _rouletteNeonLime, blurRadius: 8),
                   ],
                 ),
               ),
-          ],
-        ),
+              const SizedBox(width: 10),
+              Text(
+                "TARGET ACQUIRED",
+                style: TextStyle(
+                  color: _rouletteNeonLime,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 3.5,
+                  fontSize: 12,
+                  shadows: [
+                    Shadow(color: _rouletteNeonLime.withOpacity(0.6), blurRadius: 10),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            state.selectedRestaurant!.name,
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: 0.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          if (state.selectedRestaurant!.address != null)
+            Text(
+              state.selectedRestaurant!.address!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.62),
+                fontSize: 14,
+                height: 1.35,
+              ),
+            ),
+          const SizedBox(height: 22),
+          SizedBox(
+            width: double.infinity,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                boxShadow: [
+                  BoxShadow(
+                    color: _rouletteNeonCyan.withOpacity(0.55),
+                    blurRadius: 18,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: ElevatedButton.icon(
+                onPressed: () => notifier.launchGoogleMaps(),
+                icon: const Icon(Icons.navigation_outlined, size: 24, color: _rouletteVoid),
+                label: const Text(
+                  "ENGAGE ROUTE",
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 3.0,
+                    color: _rouletteVoid,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: _rouletteNeonCyan,
+                  foregroundColor: _rouletteVoid,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (isVisited)
+            Padding(
+              padding: const EdgeInsets.only(top: 14.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.check_circle_outline, color: _rouletteNeonLime, size: 18),
+                  const SizedBox(width: 6),
+                  Text(
+                    "LOGGED · VISITED",
+                    style: TextStyle(
+                      color: _rouletteNeonLime,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2.0,
+                      fontSize: 11,
+                      shadows: [
+                        Shadow(color: _rouletteNeonLime.withOpacity(0.5), blurRadius: 8),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -579,37 +717,80 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (_isSpinning) return const SizedBox.shrink();
 
     if (state.selectedRestaurant == null) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // "DREHEN" button removed as we have a central spin button now
-          TextButton(
-            onPressed: notifier.clearRestaurants,
-            child: const Text("Abbrechen", style: TextStyle(fontSize: 16)),
-          ),
-        ],
+      return _neonGhostButton(
+        label: "ABORT",
+        onTap: notifier.clearRestaurants,
+        color: _rouletteNeonMagenta,
       );
-    } else {
-      return Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: notifier.selectWinner,
-                icon: const Icon(Icons.replay),
-                label: const Text("Nochmal drehen"),
+    }
+
+    return Column(
+      children: [
+        _neonGhostButton(
+          label: "RESPIN",
+          icon: Icons.replay,
+          onTap: notifier.selectWinner,
+          color: _rouletteNeonCyan,
+        ),
+        const SizedBox(height: 12),
+        _neonGhostButton(
+          label: "NEW SEARCH",
+          onTap: notifier.clearRestaurants,
+          color: _rouletteNeonMagenta,
+        ),
+      ],
+    );
+  }
+
+  Widget _neonGhostButton({
+    required String label,
+    required VoidCallback onTap,
+    required Color color,
+    IconData? icon,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.08),
+            border: Border.all(color: color, width: 1.3),
+            borderRadius: BorderRadius.circular(4),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.35),
+                blurRadius: 14,
+                spreadRadius: 0.5,
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          TextButton(
-            onPressed: notifier.clearRestaurants,
-            child: const Text("Neue Suche starten"),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(icon, color: color, size: 16),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                style: TextStyle(
+                  color: color,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 3.0,
+                  fontSize: 12,
+                  shadows: [
+                    Shadow(color: color.withOpacity(0.7), blurRadius: 10),
+                  ],
+                ),
+              ),
+            ],
           ),
-        ],
-      );
-    }
+        ),
+      ),
+    );
   }
 
   Widget _buildErrorWidget(String error, VoidCallback onClose) {
@@ -634,4 +815,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       ),
     );
   }
+}
+
+// Subtle scan-line / HUD grid painter for the roulette overlay background.
+class _RouletteGridPainter extends CustomPainter {
+  const _RouletteGridPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final linePaint = Paint()
+      ..color = const Color(0xFF00F0FF).withOpacity(0.05)
+      ..strokeWidth = 0.8;
+
+    const step = 36.0;
+    for (double x = 0; x < size.width; x += step) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), linePaint);
+    }
+    for (double y = 0; y < size.height; y += step) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), linePaint);
+    }
+
+    // Two subtle horizontal scan accents
+    final scanPaint = Paint()
+      ..color = const Color(0xFFFF1FA8).withOpacity(0.07)
+      ..strokeWidth = 1.2;
+    canvas.drawLine(Offset(0, size.height * 0.22), Offset(size.width, size.height * 0.22), scanPaint);
+    canvas.drawLine(Offset(0, size.height * 0.78), Offset(size.width, size.height * 0.78), scanPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
