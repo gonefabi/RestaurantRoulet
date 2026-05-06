@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/models/restaurant.dart';
 import '../../application/roulette_notifier.dart';
 import 'control_buttons.dart';
@@ -21,6 +22,7 @@ class RouletteOverlay extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final state = ref.watch(rouletteProvider);
     final notifier = ref.read(rouletteProvider.notifier);
     final winner = state.selectedRestaurant;
@@ -34,9 +36,12 @@ class RouletteOverlay extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (showWheel)
-                const Text(
-                  'Wähle dein Schicksal!',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                Text(
+                  l.chooseYourFate,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               const SizedBox(height: 20),
               if (showWheel)

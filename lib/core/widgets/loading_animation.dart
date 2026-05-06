@@ -1,10 +1,12 @@
-import 'dart:async'; // Timer importiert
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 
+import '../localization/generated/app_localizations.dart';
+
 class LoadingAnimation extends StatefulWidget {
   final bool isLoading;
-  const LoadingAnimation({Key? key, required this.isLoading}) : super(key: key);
+  const LoadingAnimation({super.key, required this.isLoading});
 
   @override
   State<LoadingAnimation> createState() => _LoadingAnimationState();
@@ -14,8 +16,6 @@ class _LoadingAnimationState extends State<LoadingAnimation>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   bool _showSlowLoadingText = false;
-  
-  // Timer für die "langsame Suche" Nachricht
   late final Timer _slowLoadingTimer;
 
   @override
@@ -45,6 +45,7 @@ class _LoadingAnimationState extends State<LoadingAnimation>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     const int iconCount = 8;
 
     return Container(
@@ -96,17 +97,21 @@ class _LoadingAnimationState extends State<LoadingAnimation>
             ),
           ),
           const SizedBox(height: 40),
-          const Text(
-            "Suche Restaurants...",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+          Text(
+            l.loadingSearch,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
           const SizedBox(height: 10),
           AnimatedOpacity(
             duration: const Duration(milliseconds: 500),
             opacity: _showSlowLoadingText && widget.isLoading ? 1.0 : 0.0,
-            child: const Text(
-              "Einen Moment Geduld, die Suche dauert etwas länger.",
-              style: TextStyle(color: Colors.black54),
+            child: Text(
+              l.loadingSlow,
+              style: const TextStyle(color: Colors.black54),
             ),
           ),
         ],

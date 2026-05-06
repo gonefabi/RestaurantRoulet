@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/models/restaurant.dart';
 import '../../../../core/services/link_launcher_service.dart';
 import '../../../../core/widgets/app_action_sheet.dart';
@@ -19,18 +20,19 @@ class VisitedPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AppLocalizations.of(context);
     final asyncList = ref.watch(visitedRestaurantsProvider);
     final sortOption = ref.watch(visitedSortOptionProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Besuchte Restaurants')),
+      appBar: AppBar(title: Text(l.visitedTitle)),
       body: Column(
         children: [
           const SortChipRow(),
           Expanded(
             child: asyncList.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Fehler: $e')),
+              error: (e, _) => Center(child: Text(l.visitedError(e.toString()))),
               data: (list) {
                 if (list.isEmpty) return const _EmptyState();
                 final sorted = sortVisited(list, sortOption);
@@ -62,18 +64,21 @@ class VisitedPage extends ConsumerWidget {
     WidgetRef ref,
     Restaurant restaurant,
   ) {
+    final l = AppLocalizations.of(context);
     final isRated = (restaurant.userRating ?? 0) > 0;
     AppActionSheet.show(
       context,
-      title: restaurant.name,
+      title: restaurant.name.isNotEmpty
+          ? restaurant.name
+          : l.restaurantUnknownName,
       subtitle: restaurant.address,
       actions: [
         AppAction(
           icon: Icons.star_rounded,
           iconColor: Colors.amber.shade700,
           iconBackground: Colors.amber.shade50,
-          label: isRated ? 'Bewertung ändern' : 'Jetzt bewerten',
-          subtitle: isRated ? null : 'Noch nicht bewertet',
+          label: isRated ? l.visitedRateChange : l.visitedRateNew,
+          subtitle: isRated ? null : l.visitedNotRated,
           subtitleWidget: isRated
               ? StarRating(
                   rating: restaurant.userRating!,
@@ -85,8 +90,8 @@ class VisitedPage extends ConsumerWidget {
         ),
         AppAction(
           icon: Icons.navigation_rounded,
-          label: 'Erneut besuchen',
-          subtitle: 'Route in Google Maps öffnen',
+          label: l.visitedReVisit,
+          subtitle: l.visitedReVisitSubtitle,
           onTap: () => ref.read(linkLauncherServiceProvider).openMapsRoute(
                 name: restaurant.name,
                 address: restaurant.address,
@@ -123,6 +128,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -130,7 +136,7 @@ class _EmptyState extends StatelessWidget {
           Icon(Icons.restaurant, size: 64, color: Colors.grey.shade300),
           const SizedBox(height: 16),
           Text(
-            'Noch keine Restaurants besucht.',
+            l.visitedEmpty,
             style: TextStyle(color: Colors.grey.shade500),
           ),
         ],

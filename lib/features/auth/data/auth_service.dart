@@ -20,7 +20,6 @@ class AuthService {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
-        // Der User hat den Login abgebrochen
         return null;
       }
 
@@ -29,7 +28,6 @@ class AuthService {
       final idToken = googleAuth.idToken;
 
       if (idToken == null) {
-        print("Kein ID Token erhalten.");
         return null;
       }
 
@@ -40,8 +38,7 @@ class AuthService {
       );
 
       return response.user;
-    } catch (e) {
-      print("Google Sign-In Fehler: $e");
+    } catch (_) {
       return null;
     }
   }

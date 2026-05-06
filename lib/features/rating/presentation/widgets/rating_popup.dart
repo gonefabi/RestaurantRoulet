@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/models/restaurant.dart';
 import '../../../../core/widgets/star_rating.dart';
 
@@ -9,11 +10,11 @@ class RatingPopup extends StatefulWidget {
   final Function(int) onRatingSaved;
 
   const RatingPopup({
-    Key? key,
+    super.key,
     required this.restaurant,
     required this.onDismiss,
     required this.onRatingSaved,
-  }) : super(key: key);
+  });
 
   @override
   State<RatingPopup> createState() => _RatingPopupState();
@@ -29,11 +30,16 @@ class _RatingPopupState extends State<RatingPopup> {
   }
 
   String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
+    return '${date.day.toString().padLeft(2, '0')}.'
+        '${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final displayName = widget.restaurant.name.isNotEmpty
+        ? widget.restaurant.name
+        : l.restaurantUnknownName;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
@@ -51,7 +57,7 @@ class _RatingPopupState extends State<RatingPopup> {
               ],
             ),
             Text(
-              widget.restaurant.name,
+              displayName,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -65,7 +71,7 @@ class _RatingPopupState extends State<RatingPopup> {
             if (widget.restaurant.visitedAt != null) ...[
               const SizedBox(height: 4),
               Text(
-                'Besucht am: ${_formatDate(widget.restaurant.visitedAt!)}',
+                l.ratingVisitedOn(_formatDate(widget.restaurant.visitedAt!)),
                 style: const TextStyle(fontSize: 12, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
@@ -85,7 +91,7 @@ class _RatingPopupState extends State<RatingPopup> {
                   widget.onRatingSaved(_rating);
                 }
               },
-              child: const Text('Bewertung speichern'),
+              child: Text(l.ratingSave),
             ),
           ],
         ),

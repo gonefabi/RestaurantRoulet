@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../application/roulette_notifier.dart';
 
 class ControlButtons extends ConsumerWidget {
@@ -16,6 +17,7 @@ class ControlButtons extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (isSpinning) return const SizedBox.shrink();
+    final l = AppLocalizations.of(context);
     final notifier = ref.read(rouletteProvider.notifier);
 
     if (!hasSelection) {
@@ -24,7 +26,7 @@ class ControlButtons extends ConsumerWidget {
         children: [
           TextButton(
             onPressed: notifier.clearRestaurants,
-            child: const Text('Abbrechen', style: TextStyle(fontSize: 16)),
+            child: Text(l.cancel, style: const TextStyle(fontSize: 16)),
           ),
         ],
       );
@@ -35,12 +37,12 @@ class ControlButtons extends ConsumerWidget {
         OutlinedButton.icon(
           onPressed: notifier.selectWinner,
           icon: const Icon(Icons.replay),
-          label: const Text('Nochmal drehen'),
+          label: Text(l.spinAgain),
         ),
         const SizedBox(height: 10),
         TextButton(
           onPressed: notifier.clearRestaurants,
-          child: const Text('Neue Suche starten'),
+          child: Text(l.newSearch),
         ),
       ],
     );

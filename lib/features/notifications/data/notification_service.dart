@@ -20,7 +20,6 @@ class NotificationService {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // iOS config if needed in future
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
       requestSoundPermission: false,
@@ -28,7 +27,8 @@ class NotificationService {
       requestAlertPermission: false,
     );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
+    const InitializationSettings initializationSettings =
+        InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsDarwin,
     );
@@ -36,10 +36,8 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.initialize(
       settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) async {
-        // Handle notification tap
         if (response.payload != null) {
-          // Logic to open popup will be handled by UI checking DB
-          // or we can use a stream to notify UI
+          // Handled by UI on next launch via getNotificationAppLaunchDetails.
         }
       },
     );
@@ -52,27 +50,32 @@ class NotificationService {
         ?.requestNotificationsPermission();
   }
 
-  Future<void> scheduleRatingNotification(Restaurant restaurant) async {
+  Future<void> scheduleRatingNotification(
+    Restaurant restaurant, {
+    required String title,
+    required String body,
+    required String channelName,
+    required String channelDescription,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    final bool notificationsEnabled = prefs.getBool('notifications_enabled') ?? true;
-    
+    final bool notificationsEnabled =
+        prefs.getBool('notifications_enabled') ?? true;
+
     if (!notificationsEnabled) return;
 
-    // Schedule for 3 hours from now
-    final scheduledTime = tz.TZDateTime.now(tz.local).add(const Duration(hours: 3));
-    // debug: 10 seconds for testing if needed
-    // final scheduledTime = tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10));
+    final scheduledTime =
+        tz.TZDateTime.now(tz.local).add(const Duration(hours: 3));
 
     await flutterLocalNotificationsPlugin.zonedSchedule(
-      id: restaurant.id.hashCode, // Unique ID based on restaurant ID
-      title: 'Wie war es bei ${restaurant.name}?',
-      body: 'Bewerte jetzt deinen Besuch!',
+      id: restaurant.id.hashCode,
+      title: title,
+      body: body,
       scheduledDate: scheduledTime,
-      notificationDetails: const NotificationDetails(
+      notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           'rating_channel',
-          'Bewertungen',
-          channelDescription: 'Erinnerung zur Bewertung von Restaurantbesuchen',
+          channelName,
+          channelDescription: channelDescription,
           importance: Importance.high,
           priority: Priority.high,
         ),

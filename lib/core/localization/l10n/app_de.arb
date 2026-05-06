@@ -1,0 +1,145 @@
+{
+  "@@locale": "de",
+
+  "appTitle": "Restaurant Roulette",
+
+  "loginWelcome": "Willkommen bei\nRestaurant Roulette!",
+  "loginWithGoogle": "Mit Google anmelden",
+
+  "searchRestaurants": "Restaurant suchen",
+  "chooseYourFate": "Wähle dein Schicksal!",
+  "spin": "SPIN",
+  "winner": "🎉 GEWINNER 🎉",
+  "startRoute": "ROUTE STARTEN",
+  "alreadyVisited": "Bereits besucht",
+  "cancel": "Abbrechen",
+  "spinAgain": "Nochmal drehen",
+  "newSearch": "Neue Suche starten",
+
+  "errorLocationServicesDisabled": "Standortdienste sind deaktiviert.",
+  "errorLocationPermissionDenied": "Standortberechtigung verweigert.",
+  "errorLocationPermissionForeverDenied": "Standortberechtigung dauerhaft verweigert.",
+  "errorNoLocation": "Kein Standort ausgewählt.",
+  "errorNoRestaurantsFound": "Keine Restaurants gefunden.",
+  "errorNoRestaurantsFoundExcludingVisited": "Keine Restaurants gefunden. (Besuchte ausgeblendet)",
+  "errorApiUnknown": "Unbekannter Fehler bei der Abfrage.",
+  "errorGeneric": "Ein Fehler ist aufgetreten.",
+
+  "profileTitle": "Profil",
+  "profileVisited": "Besuchte Restaurants",
+  "profileNotifications": "Benachrichtigungen",
+  "profilePrivacy": "Datenschutz",
+  "profileImprint": "Impressum",
+
+  "filterTitle": "Filter",
+  "filterClose": "Schließen",
+  "filterRadiusTitle": "Suchradius",
+  "filterRadiusSubtitle": "Wie weit darf das Restaurant entfernt sein?",
+  "filterRadiusValue": "{km} km",
+  "@filterRadiusValue": {
+    "placeholders": {
+      "km": { "type": "String" }
+    }
+  },
+  "filterPlaceTypeTitle": "Lokal-Typ",
+  "filterPlaceTypeSubtitle": "Wonach suchst du? Mehrfachauswahl möglich.",
+  "filterCuisineTitle": "Küche",
+  "filterCuisineSubtitle": "Schränkt die Auswahl auf Restaurants mit dieser Küche ein. Greift nur, wenn „Restaurant\" als Lokal-Typ aktiv ist.",
+  "filterCuisineHint": "Aktiviere „Restaurant\" oben, damit Küchen-Filter wirken.",
+  "filterDietTitle": "Ernährung",
+  "filterDietSubtitle": "Zeigt nur Lokale, die diese Optionen anbieten.",
+  "filterDietVegan": "Vegan verfügbar",
+  "filterDietVegetarian": "Vegetarisch verfügbar",
+  "filterComfortTitle": "Komfort",
+  "filterComfortSubtitle": "Ausstattung & Zugänglichkeit, sofern in OSM erfasst.",
+  "filterComfortWheelchair": "Rollstuhl-zugänglich",
+  "filterMiscTitle": "Sonstiges",
+  "filterMiscSubtitle": "Verfeinere das Roulette-Ergebnis.",
+  "filterMiscExcludeVisited": "Besuchte ausblenden",
+  "filterMiscExcludeVisitedSubtitle": "Bereits besuchte Orte ausschließen",
+  "filterOsmHeader": "Datenquelle: OpenStreetMap",
+  "filterOsmDescription": "Restaurants & Filter-Eigenschaften (Vegan, Rollstuhl …) stammen aus der freien OSM-Datenbank — gepflegt von Freiwilligen. Daten sind nicht zu 100 % vollständig oder aktuell.",
+  "filterOsmContribute": "Fehlt was? Selbst eintragen auf openstreetmap.org",
+
+  "placeTypeRestaurant": "Restaurant",
+  "placeTypeFastFood": "Fast Food",
+  "placeTypeCafe": "Café",
+  "placeTypeBar": "Bar",
+  "placeTypePub": "Pub",
+  "placeTypeBiergarten": "Biergarten",
+  "placeTypeIceCream": "Eisdiele",
+
+  "cuisineItalian": "Italienisch",
+  "cuisinePizza": "Pizza",
+  "cuisinePasta": "Pasta",
+  "cuisineAsian": "Asiatisch",
+  "cuisineChinese": "Chinesisch",
+  "cuisineJapanese": "Japanisch",
+  "cuisineSushi": "Sushi",
+  "cuisineKorean": "Koreanisch",
+  "cuisineThai": "Thailändisch",
+  "cuisineVietnamese": "Vietnamesisch",
+  "cuisineIndian": "Indisch",
+  "cuisineTurkish": "Türkisch",
+  "cuisineKebab": "Kebab",
+  "cuisineGreek": "Griechisch",
+  "cuisineFrench": "Französisch",
+  "cuisineGerman": "Deutsch",
+  "cuisineRegional": "Regional",
+  "cuisineMexican": "Mexikanisch",
+  "cuisineAmerican": "Amerikanisch",
+  "cuisineBurger": "Burger",
+  "cuisineSteakhouse": "Steakhouse",
+  "cuisineBarbecue": "Barbecue",
+  "cuisineFishAndChips": "Fish & Chips",
+  "cuisineSeafood": "Seafood",
+  "cuisineNoodle": "Nudeln",
+
+  "visitedTitle": "Besuchte Restaurants",
+  "visitedEmpty": "Noch keine Restaurants besucht.",
+  "visitedError": "Fehler: {error}",
+  "@visitedError": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "visitedRateChange": "Bewertung ändern",
+  "visitedRateNew": "Jetzt bewerten",
+  "visitedNotRated": "Noch nicht bewertet",
+  "visitedReVisit": "Erneut besuchen",
+  "visitedReVisitSubtitle": "Route in Google Maps öffnen",
+  "rateButton": "Bewerten",
+  "sortNewest": "Neueste",
+  "sortOldest": "Älteste",
+  "sortBest": "Beste",
+  "sortWorst": "Schlechteste",
+  "sortUnrated": "Unbewertet",
+  "sortMostVisited": "Meist besucht",
+
+  "notificationsTitle": "Benachrichtigungen",
+  "notificationsToggleTitle": "Benachrichtigungen erhalten",
+  "notificationsToggleSubtitle": "Erinnerungen zur Bewertung nach Restaurantbesuchen",
+  "notificationRatingTitle": "Wie war es bei {name}?",
+  "@notificationRatingTitle": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "notificationRatingBody": "Bewerte jetzt deinen Besuch!",
+  "notificationRatingChannelName": "Bewertungen",
+  "notificationRatingChannelDescription": "Erinnerung zur Bewertung von Restaurantbesuchen",
+
+  "ratingSave": "Bewertung speichern",
+  "ratingVisitedOn": "Besucht am: {date}",
+  "@ratingVisitedOn": {
+    "placeholders": {
+      "date": { "type": "String" }
+    }
+  },
+
+  "loadingSearch": "Suche Restaurants...",
+  "loadingSlow": "Einen Moment Geduld, die Suche dauert etwas länger.",
+
+  "restaurantUnknownName": "Unbekanntes Restaurant",
+  "restaurantNoAddress": "Keine Adresse verfügbar"
+}

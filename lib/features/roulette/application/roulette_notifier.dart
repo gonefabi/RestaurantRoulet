@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/models/restaurant.dart';
-import '../../notifications/data/notification_service.dart';
 import '../../visited/data/visited_repository.dart';
 import '../data/api_service.dart';
 import '../data/search_filters.dart';
@@ -13,21 +12,17 @@ import 'roulette_state.dart';
 /// State-Notifier für den Roulette-Flow.
 ///
 /// Hält *ausschließlich* State + asynchrone Daten-Operationen (DB, API, GPS).
-/// Externe Side-Effects wie das Öffnen von Maps-Routen liegen bewusst beim
-/// aufrufenden Widget (siehe [LinkLauncherService]) — der Notifier ist damit
-/// frei von `BuildContext`, `launchUrl`, `Navigator` usw. und gut testbar.
+/// Externe Side-Effects wie Maps/Notifications liegen bewusst beim aufrufenden
+/// Widget — der Notifier ist damit frei von BuildContext, l10n, launchUrl,
+/// und gut testbar.
 class RouletteNotifier extends StateNotifier<RouletteState> {
-  RouletteNotifier(
-    this._apiService,
-    this._visitedRepo,
-    this._notificationService,
-  ) : super(const RouletteState()) {
+  RouletteNotifier(this._apiService, this._visitedRepo)
+      : super(const RouletteState()) {
     _init();
   }
 
   final ApiService _apiService;
   final VisitedRepository _visitedRepo;
-  final NotificationService _notificationService;
 
   Future<void> _init() async {
     await updateLocation();
@@ -43,7 +38,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
   void togglePlaceType(String type) {
     final types = List<String>.from(state.placeTypes);
     if (types.contains(type)) {
-      if (types.length == 1) return; // mind. ein Typ muss aktiv bleiben
+      if (types.length == 1) return;
       types.remove(type);
     } else {
       types.add(type);
@@ -81,71 +76,71 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
   // --- Visit-Tracking ---
   Future<void> markAsVisited(Restaurant restaurant) async {
     await _visitedRepo.addVisitedRestaurant(restaurant);
-    try {
-      await _notificationService.scheduleRatingNotification(restaurant);
-    } catch (e) {
-      print('Notification scheduling failed: $e');
-    }
     final ids = await _visitedRepo.getVisitedRestaurantIds();
     state = state.copyWith(visitedIds: ids);
   }
 
   // --- GPS ---
   Future<void> updateLocation() async {
-    try {
-      final position = await _determinePosition();
-      state = state.copyWith(currentPosition: position);
-    } catch (e) {
-      state = state.copyWith(error: 'Standortfehler: $e');
-    }
-  }
-
-  Future<Position> _determinePosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
-      return Future.error('Standortdienste sind deaktiviert.');
+      state = state.copyWith(errorCode: RouletteError.locationServicesDisabled);
+      return;
     }
 
     var permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        return Future.error('Standortberechtigung verweigert.');
+        state =
+            state.copyWith(errorCode: RouletteError.locationPermissionDenied);
+        return;
       }
     }
 
     if (permission == LocationPermission.deniedForever) {
-      return Future.error('Standortberechtigung dauerhaft verweigert.');
+      state = state.copyWith(
+        errorCode: RouletteError.locationPermissionDeniedForever,
+      );
+      return;
     }
 
-    return Geolocator.getCurrentPosition();
+    try {
+      final position = await Geolocator.getCurrentPosition();
+      state = state.copyWith(currentPosition: position);
+    } catch (_) {
+      state = state.copyWith(errorCode: RouletteError.noLocation);
+    }
   }
 
   // --- Suche / Auswahl ---
   Future<void> loadRestaurants() async {
     state = state.copyWith(
       isLoading: true,
-      error: null,
       clearSelectedRestaurant: true,
     );
 
-    try {
-      if (state.currentPosition == null) {
-        await updateLocation();
-      }
-      if (state.currentPosition == null) {
-        throw Exception('Kein Standort ausgewählt.');
-      }
-
-      final filters = SearchFilters(
-        radiusKm: state.radiusKm,
-        placeTypes: state.placeTypes,
-        cuisines: state.selectedCuisines,
-        isVegan: state.isVegan,
-        isVegetarian: state.isVegetarian,
-        wheelchairAccessible: state.wheelchairAccessible,
+    if (state.currentPosition == null) {
+      await updateLocation();
+    }
+    if (state.currentPosition == null) {
+      state = state.copyWith(
+        isLoading: false,
+        errorCode: RouletteError.noLocation,
       );
+      return;
+    }
 
+    final filters = SearchFilters(
+      radiusKm: state.radiusKm,
+      placeTypes: state.placeTypes,
+      cuisines: state.selectedCuisines,
+      isVegan: state.isVegan,
+      isVegetarian: state.isVegetarian,
+      wheelchairAccessible: state.wheelchairAccessible,
+    );
+
+    try {
       var results = await _apiService.fetchRestaurants(
         lat: state.currentPosition!.latitude,
         lng: state.currentPosition!.longitude,
@@ -154,24 +149,26 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
       if (state.excludeVisited) {
         await _loadVisitedRestaurants();
-        results = results
-            .where((r) => !state.visitedIds.contains(r.id))
-            .toList();
+        results =
+            results.where((r) => !state.visitedIds.contains(r.id)).toList();
       }
 
       if (results.isEmpty) {
-        var msg = 'Keine Restaurants gefunden.';
-        if (state.excludeVisited) msg += ' (Besuchte ausgeblendet)';
         state = state.copyWith(
           isLoading: false,
           restaurants: [],
-          error: msg,
+          errorCode: state.excludeVisited
+              ? RouletteError.noRestaurantsFoundExcludingVisited
+              : RouletteError.noRestaurantsFound,
         );
       } else {
         state = state.copyWith(isLoading: false, restaurants: results);
       }
-    } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Fehler: $e');
+    } catch (_) {
+      state = state.copyWith(
+        isLoading: false,
+        errorCode: RouletteError.apiError,
+      );
     }
   }
 
@@ -193,6 +190,5 @@ final rouletteProvider =
   return RouletteNotifier(
     ref.watch(apiServiceProvider),
     ref.watch(visitedRepositoryProvider),
-    ref.watch(notificationServiceProvider),
   );
 });

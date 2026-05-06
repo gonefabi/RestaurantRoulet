@@ -50,22 +50,14 @@ class ApiService {
       queryParams['conditions'] = conditions.join(',');
     }
 
-    try {
-      final response = await _dio.get(url, queryParameters: queryParams);
-      if (response.statusCode == 200 && response.data['features'] != null) {
-        final features = response.data['features'] as List;
-        return features
-            .map((feature) => Restaurant.fromGeoapify(feature))
-            .toList();
-      }
-      return [];
-    } on DioException catch (e) {
-      print('Geoapify API Fehler: $e');
-      throw Exception('Fehler bei der Abfrage von Geoapify: ${e.message}');
-    } catch (e) {
-      print('Allgemeiner API Fehler: $e');
-      throw Exception('Unbekannter Fehler bei der Abfrage.');
+    final response = await _dio.get(url, queryParameters: queryParams);
+    if (response.statusCode == 200 && response.data['features'] != null) {
+      final features = response.data['features'] as List;
+      return features
+          .map((feature) => Restaurant.fromGeoapify(feature))
+          .toList();
     }
+    return [];
   }
 }
 

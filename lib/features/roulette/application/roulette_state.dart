@@ -2,6 +2,16 @@ import 'package:geolocator/geolocator.dart';
 
 import '../../../core/models/restaurant.dart';
 
+enum RouletteError {
+  locationServicesDisabled,
+  locationPermissionDenied,
+  locationPermissionDeniedForever,
+  noLocation,
+  noRestaurantsFound,
+  noRestaurantsFoundExcludingVisited,
+  apiError,
+}
+
 /// Immutabler State des Roulette-Flows (Standort, Filter, Suchergebnis,
 /// Auswahl, bekannte Besuche).
 class RouletteState {
@@ -9,7 +19,7 @@ class RouletteState {
     this.isLoading = false,
     this.restaurants = const [],
     this.selectedRestaurant,
-    this.error,
+    this.errorCode,
     this.currentPosition,
     this.radiusKm = 2.0,
     this.placeTypes = const ['restaurant'],
@@ -24,7 +34,7 @@ class RouletteState {
   final bool isLoading;
   final List<Restaurant> restaurants;
   final Restaurant? selectedRestaurant;
-  final String? error;
+  final RouletteError? errorCode;
   final Position? currentPosition;
   final double radiusKm;
   final List<String> placeTypes;
@@ -39,7 +49,7 @@ class RouletteState {
     bool? isLoading,
     List<Restaurant>? restaurants,
     Restaurant? selectedRestaurant,
-    String? error,
+    RouletteError? errorCode,
     Position? currentPosition,
     double? radiusKm,
     bool clearSelectedRestaurant = false,
@@ -57,7 +67,7 @@ class RouletteState {
       selectedRestaurant: clearSelectedRestaurant
           ? null
           : selectedRestaurant ?? this.selectedRestaurant,
-      error: error,
+      errorCode: errorCode,
       currentPosition: currentPosition ?? this.currentPosition,
       radiusKm: radiusKm ?? this.radiusKm,
       placeTypes: placeTypes ?? this.placeTypes,

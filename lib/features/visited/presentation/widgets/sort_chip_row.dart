@@ -1,42 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../application/visited_providers.dart';
 import '../../application/visited_sort.dart';
 
-extension on SortOption {
-  String get label {
-    switch (this) {
-      case SortOption.newestFirst:
-        return 'Neueste';
-      case SortOption.oldestFirst:
-        return 'Älteste';
-      case SortOption.bestRated:
-        return 'Beste';
-      case SortOption.worstRated:
-        return 'Schlechteste';
-      case SortOption.unratedFirst:
-        return 'Unbewertet';
-      case SortOption.mostVisited:
-        return 'Meist besucht';
-    }
+String _sortLabel(AppLocalizations l, SortOption option) {
+  switch (option) {
+    case SortOption.newestFirst:
+      return l.sortNewest;
+    case SortOption.oldestFirst:
+      return l.sortOldest;
+    case SortOption.bestRated:
+      return l.sortBest;
+    case SortOption.worstRated:
+      return l.sortWorst;
+    case SortOption.unratedFirst:
+      return l.sortUnrated;
+    case SortOption.mostVisited:
+      return l.sortMostVisited;
   }
+}
 
-  IconData get icon {
-    switch (this) {
-      case SortOption.newestFirst:
-        return Icons.arrow_downward;
-      case SortOption.oldestFirst:
-        return Icons.arrow_upward;
-      case SortOption.bestRated:
-        return Icons.star;
-      case SortOption.worstRated:
-        return Icons.star_border;
-      case SortOption.unratedFirst:
-        return Icons.star_outline;
-      case SortOption.mostVisited:
-        return Icons.repeat;
-    }
+IconData _sortIcon(SortOption option) {
+  switch (option) {
+    case SortOption.newestFirst:
+      return Icons.arrow_downward;
+    case SortOption.oldestFirst:
+      return Icons.arrow_upward;
+    case SortOption.bestRated:
+      return Icons.star;
+    case SortOption.worstRated:
+      return Icons.star_border;
+    case SortOption.unratedFirst:
+      return Icons.star_outline;
+    case SortOption.mostVisited:
+      return Icons.repeat;
   }
 }
 
@@ -47,6 +46,7 @@ class SortChipRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final selected = ref.watch(visitedSortOptionProvider);
 
     return SizedBox(
@@ -64,14 +64,14 @@ class SortChipRow extends ConsumerWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    option.icon,
+                    _sortIcon(option),
                     size: 14,
                     color: isSelected
                         ? Colors.white
                         : theme.colorScheme.primary,
                   ),
                   const SizedBox(width: 4),
-                  Text(option.label),
+                  Text(_sortLabel(l, option)),
                 ],
               ),
               onSelected: (_) =>

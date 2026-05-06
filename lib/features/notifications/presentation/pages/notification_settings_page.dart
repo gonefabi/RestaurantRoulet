@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
+
 class NotificationSettingsPage extends StatefulWidget {
-  const NotificationSettingsPage({Key? key}) : super(key: key);
+  const NotificationSettingsPage({super.key});
 
   @override
-  State<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
+  State<NotificationSettingsPage> createState() =>
+      _NotificationSettingsPageState();
 }
 
 class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
@@ -36,17 +39,16 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Benachrichtigungen'),
-      ),
+      appBar: AppBar(title: Text(l.notificationsTitle)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               children: [
                 SwitchListTile(
-                  title: const Text('Benachrichtigungen erhalten'),
-                  subtitle: const Text('Erinnerungen zur Bewertung nach Restaurantbesuchen'),
+                  title: Text(l.notificationsToggleTitle),
+                  subtitle: Text(l.notificationsToggleSubtitle),
                   value: _notificationsEnabled,
                   onChanged: _toggleNotifications,
                 ),

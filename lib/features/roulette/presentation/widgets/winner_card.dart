@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/models/restaurant.dart';
 
 class WinnerCard extends StatelessWidget {
@@ -17,6 +18,9 @@ class WinnerCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+    final name =
+        restaurant.name.isNotEmpty ? restaurant.name : l.restaurantUnknownName;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       elevation: 10,
@@ -25,7 +29,7 @@ class WinnerCard extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              '🎉 GEWINNER 🎉',
+              l.winner,
               style: TextStyle(
                 color: theme.colorScheme.secondary,
                 fontWeight: FontWeight.bold,
@@ -34,7 +38,7 @@ class WinnerCard extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              restaurant.name,
+              name,
               style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
@@ -51,9 +55,9 @@ class WinnerCard extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () => onStartRoute(restaurant),
                 icon: const Icon(Icons.navigation_outlined, size: 28),
-                label: const Text(
-                  'ROUTE STARTEN',
-                  style: TextStyle(fontSize: 18),
+                label: Text(
+                  l.startRoute,
+                  style: const TextStyle(fontSize: 18),
                 ),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -62,16 +66,16 @@ class WinnerCard extends StatelessWidget {
               ),
             ),
             if (alreadyVisited)
-              const Padding(
-                padding: EdgeInsets.only(top: 12),
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.check, color: Colors.green),
-                    SizedBox(width: 8),
+                    const Icon(Icons.check, color: Colors.green),
+                    const SizedBox(width: 8),
                     Text(
-                      'Bereits besucht',
-                      style: TextStyle(
+                      l.alreadyVisited,
+                      style: const TextStyle(
                         color: Colors.green,
                         fontWeight: FontWeight.bold,
                       ),

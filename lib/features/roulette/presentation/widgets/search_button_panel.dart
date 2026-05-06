@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
+
 class SearchButtonPanel extends StatelessWidget {
   const SearchButtonPanel({super.key, required this.onPressed});
 
@@ -7,6 +9,7 @@ class SearchButtonPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Positioned(
       bottom: 40,
       left: 20,
@@ -14,7 +17,7 @@ class SearchButtonPanel extends StatelessWidget {
       child: ElevatedButton.icon(
         onPressed: onPressed,
         icon: const Icon(Icons.casino_outlined, color: Colors.white),
-        label: const Text('Restaurant suchen'),
+        label: Text(l.searchRestaurants),
       ),
     );
   }

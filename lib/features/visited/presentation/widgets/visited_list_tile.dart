@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/models/restaurant.dart';
 import 'rate_button.dart';
 import 'visited_rating_badge.dart';
@@ -21,7 +22,11 @@ class VisitedListTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final isRated = (restaurant.userRating ?? 0) > 0;
+    final displayName = restaurant.name.isNotEmpty
+        ? restaurant.name
+        : l.restaurantUnknownName;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -40,7 +45,7 @@ class VisitedListTile extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      restaurant.name,
+                      displayName,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

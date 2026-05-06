@@ -5,10 +5,12 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/models/restaurant.dart';
 import '../../../../core/services/link_launcher_service.dart';
 import '../../../../core/widgets/app_error_banner.dart';
 import '../../../../core/widgets/loading_animation.dart';
+import '../../../notifications/data/notification_service.dart';
 import '../../../rating/application/rating_prompt_coordinator.dart';
 import '../../application/roulette_notifier.dart';
 import '../../application/roulette_state.dart';
@@ -19,10 +21,6 @@ import '../widgets/roulette_overlay.dart';
 import '../widgets/search_button_panel.dart';
 
 /// Hauptbildschirm: Karte + Filter-/Profil-Menüs + Suchbutton + Roulette-Overlay.
-///
-/// Hält ausschließlich UI-State (Map-Controller, Spin-Animation, Menü-Toggles)
-/// sowie die Rating-Popup-Orchestrierung. Daten- und Filter-Logik leben in
-/// [rouletteProvider]; Side-Effects (Maps öffnen) im [LinkLauncherService].
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
@@ -57,10 +55,18 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Future<void> _startRouteAndMarkVisited(Restaurant restaurant) async {
+    final l = AppLocalizations.of(context);
     try {
       await ref.read(rouletteProvider.notifier).markAsVisited(restaurant);
-    } catch (e) {
-      print('markAsVisited fehlgeschlagen: $e');
+      await ref.read(notificationServiceProvider).scheduleRatingNotification(
+            restaurant,
+            title: l.notificationRatingTitle(restaurant.name),
+            body: l.notificationRatingBody,
+            channelName: l.notificationRatingChannelName,
+            channelDescription: l.notificationRatingChannelDescription,
+          );
+    } catch (_) {
+      // Side-Effect-Fehler dürfen den Maps-Aufruf nicht blocken.
     }
     await ref.read(linkLauncherServiceProvider).openMapsRoute(
           name: restaurant.name,
@@ -97,8 +103,28 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  String _localizedError(AppLocalizations l, RouletteError code) {
+    switch (code) {
+      case RouletteError.locationServicesDisabled:
+        return l.errorLocationServicesDisabled;
+      case RouletteError.locationPermissionDenied:
+        return l.errorLocationPermissionDenied;
+      case RouletteError.locationPermissionDeniedForever:
+        return l.errorLocationPermissionForeverDenied;
+      case RouletteError.noLocation:
+        return l.errorNoLocation;
+      case RouletteError.noRestaurantsFound:
+        return l.errorNoRestaurantsFound;
+      case RouletteError.noRestaurantsFoundExcludingVisited:
+        return l.errorNoRestaurantsFoundExcludingVisited;
+      case RouletteError.apiError:
+        return l.errorApiUnknown;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     final state = ref.watch(rouletteProvider);
     final notifier = ref.read(rouletteProvider.notifier);
 
@@ -148,7 +174,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                 onStartRoute: _startRouteAndMarkVisited,
               ),
             ),
-          if (state.error != null &&
+          if (state.errorCode != null &&
               !state.isLoading &&
               state.restaurants.isEmpty)
             Positioned(
@@ -156,7 +182,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               left: 20,
               right: 20,
               child: AppErrorBanner(
-                message: state.error!,
+                message: _localizedError(l, state.errorCode!),
                 onClose: notifier.clearRestaurants,
               ),
             ),

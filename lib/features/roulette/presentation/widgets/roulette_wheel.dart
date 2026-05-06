@@ -3,6 +3,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/models/restaurant.dart';
 import '../../application/roulette_notifier.dart';
 import '../../application/roulette_state.dart';
@@ -202,18 +203,18 @@ class _RouletteWheelWidgetState extends ConsumerState<RouletteWheelWidget>
                   width: 2,
                 ),
               ),
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.restaurant_menu,
                     color: Color(0xFF007BFF),
                     size: 28,
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'SPIN',
-                    style: TextStyle(
+                    AppLocalizations.of(context).spin,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF007BFF),
                       fontSize: 13,

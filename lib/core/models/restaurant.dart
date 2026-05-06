@@ -31,9 +31,8 @@ class Restaurant {
     final properties = feature['properties'];
     return Restaurant(
       id: properties['place_id'],
-      name: properties['name'] ?? 'Unbekanntes Restaurant',
-      address: properties['address_line2'] ?? properties['address_line1'] ?? 'Keine Adresse verfügbar',
-      // Geoapify liefert im Free Tier selten Ratings, wir setzen es auf 0
+      name: properties['name'] ?? '',
+      address: properties['address_line2'] ?? properties['address_line1'],
       rating: 0.0,
       street: properties['street'],
       city: properties['city'],

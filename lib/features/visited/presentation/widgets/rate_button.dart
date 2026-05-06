@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/localization/generated/app_localizations.dart';
+
 /// Aufforderung zum Bewerten — kompakter primärfarbiger Pill-Button.
 class RateButton extends StatelessWidget {
   const RateButton({super.key, required this.onTap});
@@ -9,6 +11,7 @@ class RateButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
+    final l = AppLocalizations.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -24,14 +27,14 @@ class RateButton extends StatelessWidget {
             ),
           ],
         ),
-        child: const Row(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.star_rounded, size: 16, color: Colors.white),
-            SizedBox(width: 5),
+            const Icon(Icons.star_rounded, size: 16, color: Colors.white),
+            const SizedBox(width: 5),
             Text(
-              'Bewerten',
-              style: TextStyle(
+              l.rateButton,
+              style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: Colors.white,

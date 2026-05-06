@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../app/router.dart';
+import '../../../../core/localization/generated/app_localizations.dart';
 import '../../../../core/services/link_launcher_service.dart';
 
 class ProfileMenu extends ConsumerWidget {
@@ -20,6 +21,7 @@ class ProfileMenu extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     return Positioned(
       top: 50,
       left: 20,
@@ -49,17 +51,19 @@ class ProfileMenu extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           child: Text(
-                            'Profil',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                            l.profileTitle,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 18),
                           ),
                         ),
                         const Divider(),
                         _MenuItem(
                           icon: Icons.history,
-                          label: 'Besuchte Restaurants',
+                          label: l.profileVisited,
                           onTap: () {
                             onClose();
                             context.push(AppRoute.visited);
@@ -67,7 +71,7 @@ class ProfileMenu extends ConsumerWidget {
                         ),
                         _MenuItem(
                           icon: Icons.notifications,
-                          label: 'Benachrichtigungen',
+                          label: l.profileNotifications,
                           onTap: () {
                             onClose();
                             context.push(AppRoute.notificationSettings);
@@ -76,7 +80,7 @@ class ProfileMenu extends ConsumerWidget {
                         const Divider(),
                         _MenuItem(
                           icon: Icons.privacy_tip,
-                          label: 'Datenschutz',
+                          label: l.profilePrivacy,
                           onTap: () {
                             onClose();
                             ref.read(linkLauncherServiceProvider).openExternal(
@@ -86,7 +90,7 @@ class ProfileMenu extends ConsumerWidget {
                         ),
                         _MenuItem(
                           icon: Icons.info_outline,
-                          label: 'Impressum',
+                          label: l.profileImprint,
                           onTap: () {
                             onClose();
                             ref.read(linkLauncherServiceProvider).openExternal(
