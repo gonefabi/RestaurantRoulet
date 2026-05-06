@@ -1,8 +1,10 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:shared_preferences/shared_preferences.dart';
-import '../core/models/restaurant.dart';
+
+import '../../../core/models/restaurant.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -84,3 +86,7 @@ class NotificationService {
     await flutterLocalNotificationsPlugin.cancel(id: restaurantId.hashCode);
   }
 }
+
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => NotificationService(),
+);

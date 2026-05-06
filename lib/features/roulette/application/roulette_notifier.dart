@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/models/restaurant.dart';
-import '../../../services/notification_service.dart';
+import '../../notifications/data/notification_service.dart';
 import '../../visited/data/visited_repository.dart';
 import '../data/api_service.dart';
 import '../data/search_filters.dart';
@@ -177,6 +177,6 @@ final rouletteProvider =
   return RouletteNotifier(
     ref.watch(apiServiceProvider),
     ref.watch(visitedRepositoryProvider),
-    NotificationService(),
+    ref.watch(notificationServiceProvider),
   );
 });

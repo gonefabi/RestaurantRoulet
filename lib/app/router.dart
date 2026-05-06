@@ -7,9 +7,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/roulette/presentation/pages/home_page.dart';
 import '../features/visited/presentation/pages/visited_page.dart';
-import '../screens/login_page.dart';
-import '../screens/notification_settings_screen.dart';
-import '../services/auth_service.dart';
+import '../features/auth/data/auth_service.dart';
+import '../features/auth/presentation/pages/login_page.dart';
+import '../features/notifications/presentation/pages/notification_settings_page.dart';
 
 /// Bekannte Routen — als Konstanten, damit Aufrufer keine Strings duplizieren.
 class AppRoute {
@@ -54,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoute.notificationSettings,
-        builder: (context, state) => const NotificationSettingsScreen(),
+        builder: (context, state) => const NotificationSettingsPage(),
       ),
     ],
   );

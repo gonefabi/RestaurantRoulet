@@ -8,7 +8,7 @@ import 'package:latlong2/latlong.dart';
 import '../../../../core/models/restaurant.dart';
 import '../../../../core/services/link_launcher_service.dart';
 import '../../../../core/widgets/app_error_banner.dart';
-import '../../../../widgets/loading_animation.dart';
+import '../../../../core/widgets/loading_animation.dart';
 import '../../../rating/application/rating_prompt_coordinator.dart';
 import '../../application/roulette_notifier.dart';
 import '../../application/roulette_state.dart';

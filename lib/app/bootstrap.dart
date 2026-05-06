@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../services/notification_service.dart';
+import '../features/notifications/data/notification_service.dart';
 
 /// Initialisiert Plattform-Bindings und externe Dienste vor [runApp].
 /// Wird ausschließlich aus `main.dart` aufgerufen.

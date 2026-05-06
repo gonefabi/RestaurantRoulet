@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class NotificationSettingsScreen extends StatefulWidget {
-  const NotificationSettingsScreen({Key? key}) : super(key: key);
+class NotificationSettingsPage extends StatefulWidget {
+  const NotificationSettingsPage({Key? key}) : super(key: key);
 
   @override
-  State<NotificationSettingsScreen> createState() => _NotificationSettingsScreenState();
+  State<NotificationSettingsPage> createState() => _NotificationSettingsPageState();
 }
 
-class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
+class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   bool _notificationsEnabled = true;
   bool _isLoading = true;
 

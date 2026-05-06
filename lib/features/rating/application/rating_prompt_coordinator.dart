@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/restaurant.dart';
-import '../../../services/notification_service.dart';
-import '../../../widgets/rating_popup.dart';
+import '../../notifications/data/notification_service.dart';
+import '../presentation/widgets/rating_popup.dart';
 import '../../visited/data/visited_repository.dart';
 
 /// Findet Restaurants, die eine nachträgliche Bewertung verdient haben,
@@ -74,6 +74,6 @@ class RatingPromptCoordinator {
 final ratingPromptCoordinatorProvider = Provider<RatingPromptCoordinator>(
   (ref) => RatingPromptCoordinator(
     visitedRepo: ref.watch(visitedRepositoryProvider),
-    notificationService: NotificationService(),
+    notificationService: ref.watch(notificationServiceProvider),
   ),
 );

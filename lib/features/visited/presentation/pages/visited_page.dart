@@ -5,7 +5,7 @@ import '../../../../core/models/restaurant.dart';
 import '../../../../core/services/link_launcher_service.dart';
 import '../../../../core/widgets/app_action_sheet.dart';
 import '../../../../core/widgets/star_rating.dart';
-import '../../../../widgets/rating_popup.dart';
+import '../../../rating/presentation/widgets/rating_popup.dart';
 import '../../application/visited_providers.dart';
 import '../../application/visited_sort.dart';
 import '../../data/visited_repository.dart';
