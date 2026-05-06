@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/models/restaurant.dart';
-import '../../../services/database_service.dart';
 import '../../../services/notification_service.dart';
+import '../../visited/data/visited_repository.dart';
 import '../data/api_service.dart';
 import '../data/search_filters.dart';
 import 'roulette_state.dart';
@@ -19,14 +19,14 @@ import 'roulette_state.dart';
 class RouletteNotifier extends StateNotifier<RouletteState> {
   RouletteNotifier(
     this._apiService,
-    this._dbService,
+    this._visitedRepo,
     this._notificationService,
   ) : super(const RouletteState()) {
     _init();
   }
 
   final ApiService _apiService;
-  final DatabaseService _dbService;
+  final VisitedRepository _visitedRepo;
   final NotificationService _notificationService;
 
   Future<void> _init() async {
@@ -35,7 +35,7 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
   }
 
   Future<void> _loadVisitedRestaurants() async {
-    final ids = await _dbService.getVisitedRestaurantIds();
+    final ids = await _visitedRepo.getVisitedRestaurantIds();
     state = state.copyWith(visitedIds: ids);
   }
 
@@ -66,13 +66,13 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
   // --- Visit-Tracking ---
   Future<void> markAsVisited(Restaurant restaurant) async {
-    await _dbService.addVisitedRestaurant(restaurant);
+    await _visitedRepo.addVisitedRestaurant(restaurant);
     try {
       await _notificationService.scheduleRatingNotification(restaurant);
     } catch (e) {
       print('Notification scheduling failed: $e');
     }
-    final ids = await _dbService.getVisitedRestaurantIds();
+    final ids = await _visitedRepo.getVisitedRestaurantIds();
     state = state.copyWith(visitedIds: ids);
   }
 
@@ -176,7 +176,7 @@ final rouletteProvider =
     StateNotifierProvider<RouletteNotifier, RouletteState>((ref) {
   return RouletteNotifier(
     ref.watch(apiServiceProvider),
-    DatabaseService(),
+    ref.watch(visitedRepositoryProvider),
     NotificationService(),
   );
 });

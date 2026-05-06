@@ -6,9 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../features/roulette/presentation/pages/home_page.dart';
+import '../features/visited/presentation/pages/visited_page.dart';
 import '../screens/login_page.dart';
 import '../screens/notification_settings_screen.dart';
-import '../screens/visited_restaurants_screen.dart';
 import '../services/auth_service.dart';
 
 /// Bekannte Routen — als Konstanten, damit Aufrufer keine Strings duplizieren.
@@ -50,7 +50,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: AppRoute.visited,
-        builder: (context, state) => const VisitedRestaurantsScreen(),
+        builder: (context, state) => const VisitedPage(),
       ),
       GoRoute(
         path: AppRoute.notificationSettings,

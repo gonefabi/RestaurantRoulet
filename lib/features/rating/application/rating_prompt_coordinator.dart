@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/models/restaurant.dart';
-import '../../../services/database_service.dart';
 import '../../../services/notification_service.dart';
 import '../../../widgets/rating_popup.dart';
+import '../../visited/data/visited_repository.dart';
 
 /// Findet Restaurants, die eine nachträgliche Bewertung verdient haben,
 /// und zeigt das Bewertungs-Popup an.
@@ -13,12 +13,12 @@ import '../../../widgets/rating_popup.dart';
 /// (showDialog) — beides war vorher in HomeScreen verquickt.
 class RatingPromptCoordinator {
   const RatingPromptCoordinator({
-    required DatabaseService dbService,
+    required VisitedRepository visitedRepo,
     required NotificationService notificationService,
-  })  : _dbService = dbService,
+  })  : _visitedRepo = visitedRepo,
         _notificationService = notificationService;
 
-  final DatabaseService _dbService;
+  final VisitedRepository _visitedRepo;
   final NotificationService _notificationService;
 
   /// Sucht das Restaurant, das aktuell ein Rating-Popup auslösen soll.
@@ -31,14 +31,14 @@ class RatingPromptCoordinator {
       final payload = launch!.notificationResponse?.payload;
       if (payload != null) {
         try {
-          final visited = await _dbService.getVisitedRestaurants();
+          final visited = await _visitedRepo.getVisitedRestaurants();
           return visited.firstWhere((r) => r.id == payload);
         } catch (_) {
           // Kein passender Eintrag — Fallback auf DB-Heuristik.
         }
       }
     }
-    final visited = await _dbService.getVisitedRestaurants();
+    final visited = await _visitedRepo.getVisitedRestaurants();
     try {
       return visited.firstWhere(
         (r) =>
@@ -59,11 +59,11 @@ class RatingPromptCoordinator {
       builder: (dialogContext) => RatingPopup(
         restaurant: restaurant,
         onDismiss: () async {
-          await _dbService.markPopupDismissed(restaurant.id);
+          await _visitedRepo.markPopupDismissed(restaurant.id);
           if (dialogContext.mounted) Navigator.of(dialogContext).pop();
         },
         onRatingSaved: (rating) async {
-          await _dbService.updateRating(restaurant.id, rating);
+          await _visitedRepo.updateRating(restaurant.id, rating);
           if (dialogContext.mounted) Navigator.of(dialogContext).pop();
         },
       ),
@@ -73,7 +73,7 @@ class RatingPromptCoordinator {
 
 final ratingPromptCoordinatorProvider = Provider<RatingPromptCoordinator>(
   (ref) => RatingPromptCoordinator(
-    dbService: DatabaseService(),
+    visitedRepo: ref.watch(visitedRepositoryProvider),
     notificationService: NotificationService(),
   ),
 );

@@ -1,20 +1,21 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../core/models/restaurant.dart';
 
-class DatabaseService {
-  static final DatabaseService _instance = DatabaseService._internal();
-  factory DatabaseService() => _instance;
-  DatabaseService._internal();
+import '../../../core/models/restaurant.dart';
 
-  final SupabaseClient _supabase = Supabase.instance.client;
+/// Persistenz für besuchte Restaurants in Supabase (`visited_restaurants`-Tabelle).
+class VisitedRepository {
+  VisitedRepository({SupabaseClient? supabase})
+      : _supabase = supabase ?? Supabase.instance.client;
+
+  final SupabaseClient _supabase;
 
   String? get _userId => _supabase.auth.currentUser?.id;
 
   Future<void> addVisitedRestaurant(Restaurant restaurant) async {
     if (_userId == null) return;
 
-    // Fetch current visit_count to increment it
-    int currentCount = 0;
+    var currentCount = 0;
     try {
       final existing = await _supabase
           .from('visited_restaurants')
@@ -46,36 +47,31 @@ class DatabaseService {
         .select()
         .order('visited_at', ascending: false);
 
-    final List<Restaurant> restaurants = [];
-    for (var row in response) {
-      final map = {
-        'id': row['id'],
-        'name': row['name'],
-        'address': row['address'],
-        'street': row['street'],
-        'visited_at': row['visited_at'],
-        'rating': row['rating'],
-        'popup_dismissed': row['popup_dismissed'],
-        'visit_count': row['visit_count'],
-      };
-      restaurants.add(Restaurant.fromMap(map));
-    }
-    return restaurants;
+    return [
+      for (final row in response)
+        Restaurant.fromMap({
+          'id': row['id'],
+          'name': row['name'],
+          'address': row['address'],
+          'street': row['street'],
+          'visited_at': row['visited_at'],
+          'rating': row['rating'],
+          'popup_dismissed': row['popup_dismissed'],
+          'visit_count': row['visit_count'],
+        }),
+    ];
   }
 
   Future<Set<String>> getVisitedRestaurantIds() async {
     if (_userId == null) return {};
 
-    final response = await _supabase
-        .from('visited_restaurants')
-        .select('id');
-
-    return response.map((e) => e['id'] as String).toSet();
+    final response =
+        await _supabase.from('visited_restaurants').select('id');
+    return {for (final e in response) e['id'] as String};
   }
 
   Future<void> updateRating(String id, int rating) async {
     if (_userId == null) return;
-
     await _supabase
         .from('visited_restaurants')
         .update({'rating': rating})
@@ -84,7 +80,6 @@ class DatabaseService {
 
   Future<void> markPopupDismissed(String id) async {
     if (_userId == null) return;
-
     await _supabase
         .from('visited_restaurants')
         .update({'popup_dismissed': 1})
@@ -93,10 +88,10 @@ class DatabaseService {
 
   Future<void> removeVisitedRestaurant(String id) async {
     if (_userId == null) return;
-
-    await _supabase
-        .from('visited_restaurants')
-        .delete()
-        .eq('id', id);
+    await _supabase.from('visited_restaurants').delete().eq('id', id);
   }
 }
+
+final visitedRepositoryProvider = Provider<VisitedRepository>(
+  (ref) => VisitedRepository(),
+);
