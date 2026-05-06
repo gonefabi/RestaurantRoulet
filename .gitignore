@@ -18,6 +18,9 @@
 # Visual Studio Code related
 .vscode/
 
+# Build-time secrets — copy .env.example.json to .env.json and fill in values
+.env.json
+
 # Flutter/Dart/Pub related
 **/doc/api/
 .dart_tool/

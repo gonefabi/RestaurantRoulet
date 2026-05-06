@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../config/api_keys.dart';
+import '../../../core/config/env.dart';
 import '../../../core/models/restaurant.dart';
 import 'search_filters.dart';
 
@@ -10,7 +10,7 @@ class ApiService {
   ApiService(this._dio);
 
   final Dio _dio;
-  final String _geoapifyApiKey = ApiKeys.geoapifyKey;
+  final String _geoapifyApiKey = Env.geoapifyKey;
 
   Future<List<Restaurant>> fetchRestaurants({
     required double lat,

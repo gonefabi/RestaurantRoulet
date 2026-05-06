@@ -1,21 +1,16 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+import '../../../core/config/env.dart';
 
 class AuthService {
-  final SupabaseClient _supabase = Supabase.instance.client;
-
-  // TODO: Trage hier deine Web Client ID aus der Google Cloud Console ein.
-  // Das ist NICHT die Android-Client-ID.
-  final String _webClientId = '882794991997-aupn8mghfid3eciabjf4c8s3m4sdvs76.apps.googleusercontent.com';
-
-  late final GoogleSignIn _googleSignIn;
-
   AuthService() {
-    _googleSignIn = GoogleSignIn(
-      serverClientId: _webClientId,
-    );
+    _googleSignIn = GoogleSignIn(serverClientId: Env.googleWebClientId);
   }
+
+  final SupabaseClient _supabase = Supabase.instance.client;
+  late final GoogleSignIn _googleSignIn;
 
   // Stream, um den Auth-Status zu überwachen
   Stream<User?> get authStateChanges => _supabase.auth.onAuthStateChange.map((event) => event.session?.user);
