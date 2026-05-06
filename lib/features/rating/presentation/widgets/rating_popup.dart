@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../core/models/restaurant.dart';
-import '../core/widgets/star_rating.dart';
+
+import '../../../../core/models/restaurant.dart';
+import '../../../../core/widgets/star_rating.dart';
 
 class RatingPopup extends StatefulWidget {
   final Restaurant restaurant;
