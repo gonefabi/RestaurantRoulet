@@ -3,9 +3,9 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_fortune_wheel/flutter_fortune_wheel.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../core/models/restaurant.dart';
-import '../features/roulette/application/roulette_notifier.dart';
-import '../features/roulette/application/roulette_state.dart';
+import '../../../../core/models/restaurant.dart';
+import '../../application/roulette_notifier.dart';
+import '../../application/roulette_state.dart';
 
 class RouletteWheelWidget extends ConsumerStatefulWidget {
   final List<Restaurant> restaurants;
