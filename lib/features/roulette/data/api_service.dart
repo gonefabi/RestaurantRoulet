@@ -1,30 +1,17 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../config/api_keys.dart';
-import '../core/models/restaurant.dart';
 
-// Einfache Filter für die Geoapify-Suche
-class SearchFilters {
-  final double radiusKm;
-  final List<String> cuisines;
-  final bool isVegan;
-  final bool isVegetarian;
+import '../../../config/api_keys.dart';
+import '../../../core/models/restaurant.dart';
+import 'search_filters.dart';
 
-  const SearchFilters({
-    this.radiusKm = 2.0,
-    this.cuisines = const [],
-    this.isVegan = false,
-    this.isVegetarian = false,
-  });
-}
-
+/// Geoapify-basierte Restaurant-Suche.
 class ApiService {
+  ApiService(this._dio);
+
   final Dio _dio;
   final String _geoapifyApiKey = ApiKeys.geoapifyKey;
 
-  ApiService(this._dio);
-
-  // --- Restaurant-Suche (Nur Geoapify) ---
   Future<List<Restaurant>> fetchRestaurants({
     required double lat,
     required double lng,
@@ -32,41 +19,35 @@ class ApiService {
   }) async {
     const url = 'https://api.geoapify.com/v2/places';
     final radiusMeters = (filters.radiusKm * 1000).toInt();
-    
-    // Basis-Kategorie
+
     List<String> categories = ['catering.restaurant'];
-    
-    // Cuisines hinzufügen
     if (filters.cuisines.isNotEmpty) {
-      categories = filters.cuisines.map((c) => 'catering.restaurant.$c').toList();
+      categories =
+          filters.cuisines.map((c) => 'catering.restaurant.$c').toList();
     }
 
-    final queryParams = {
+    final queryParams = <String, dynamic>{
       'categories': categories.join(','),
       'filter': 'circle:$lng,$lat,$radiusMeters',
       'bias': 'proximity:$lng,$lat',
-      'limit': 50, 
+      'limit': 50,
       'apiKey': _geoapifyApiKey,
     };
 
-    List<String> conditions = [];
-    if (filters.isVegan) {
-      conditions.add('vegan');
-    }
-    if (filters.isVegetarian) {
-      conditions.add('vegetarian');
-    }
-
+    final conditions = <String>[];
+    if (filters.isVegan) conditions.add('vegan');
+    if (filters.isVegetarian) conditions.add('vegetarian');
     if (conditions.isNotEmpty) {
       queryParams['conditions'] = conditions.join(',');
     }
 
     try {
       final response = await _dio.get(url, queryParameters: queryParams);
-
       if (response.statusCode == 200 && response.data['features'] != null) {
         final features = response.data['features'] as List;
-        return features.map((feature) => Restaurant.fromGeoapify(feature)).toList();
+        return features
+            .map((feature) => Restaurant.fromGeoapify(feature))
+            .toList();
       }
       return [];
     } on DioException catch (e) {
@@ -79,6 +60,4 @@ class ApiService {
   }
 }
 
-final apiServiceProvider = Provider<ApiService>((ref) {
-  return ApiService(Dio());
-});
+final apiServiceProvider = Provider<ApiService>((ref) => ApiService(Dio()));

@@ -3,7 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'dart:math';
-import '../providers/roulette_provider.dart';
+import '../features/roulette/application/roulette_notifier.dart';
+import '../features/roulette/application/roulette_state.dart';
 import '../widgets/roulette_wheel.dart';
 import '../widgets/loading_animation.dart';
 import 'package:go_router/go_router.dart';
@@ -104,6 +105,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _startRouteAndMarkVisited(
+    RouletteNotifier notifier,
+    RouletteState state,
+  ) async {
+    final restaurant = state.selectedRestaurant;
+    if (restaurant == null) return;
+    try {
+      await notifier.markAsVisited(restaurant);
+    } catch (e) {
+      print('markAsVisited fehlgeschlagen: $e');
+    }
+    await ref.read(linkLauncherServiceProvider).openMapsRoute(
+          name: restaurant.name,
+          address: restaurant.address,
+        );
   }
 
   @override
@@ -545,7 +563,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () => notifier.launchGoogleMaps(),
+                onPressed: () => _startRouteAndMarkVisited(notifier, state),
                 icon: const Icon(Icons.navigation_outlined, size: 28),
                 label: const Text("ROUTE STARTEN", style: TextStyle(fontSize: 18)),
                 style: ElevatedButton.styleFrom(

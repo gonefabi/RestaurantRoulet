@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import '../core/models/restaurant.dart';
 import '../core/widgets/app_action_sheet.dart';
 import '../core/widgets/star_rating.dart';
-import '../providers/roulette_provider.dart';
+import '../core/services/link_launcher_service.dart';
 import '../services/database_service.dart';
 import '../widgets/rating_popup.dart';
 
@@ -146,9 +146,10 @@ class _VisitedRestaurantsScreenState
           icon: Icons.navigation_rounded,
           label: 'Erneut besuchen',
           subtitle: 'Route in Google Maps öffnen',
-          onTap: () => ref
-              .read(rouletteProvider.notifier)
-              .navigateToRestaurant(restaurant),
+          onTap: () => ref.read(linkLauncherServiceProvider).openMapsRoute(
+                name: restaurant.name,
+                address: restaurant.address,
+              ),
         ),
       ],
     );
