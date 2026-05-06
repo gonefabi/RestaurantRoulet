@@ -20,10 +20,18 @@ class ApiService {
     const url = 'https://api.geoapify.com/v2/places';
     final radiusMeters = (filters.radiusKm * 1000).toInt();
 
-    List<String> categories = ['catering.restaurant'];
-    if (filters.cuisines.isNotEmpty) {
-      categories =
-          filters.cuisines.map((c) => 'catering.restaurant.$c').toList();
+    final categories = <String>{};
+    final types = filters.placeTypes.isEmpty
+        ? const ['restaurant']
+        : filters.placeTypes;
+    for (final type in types) {
+      if (type == 'restaurant' && filters.cuisines.isNotEmpty) {
+        for (final c in filters.cuisines) {
+          categories.add('catering.restaurant.$c');
+        }
+      } else {
+        categories.add('catering.$type');
+      }
     }
 
     final queryParams = <String, dynamic>{
@@ -37,6 +45,7 @@ class ApiService {
     final conditions = <String>[];
     if (filters.isVegan) conditions.add('vegan');
     if (filters.isVegetarian) conditions.add('vegetarian');
+    if (filters.wheelchairAccessible) conditions.add('wheelchair');
     if (conditions.isNotEmpty) {
       queryParams['conditions'] = conditions.join(',');
     }

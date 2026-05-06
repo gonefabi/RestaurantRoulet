@@ -40,6 +40,17 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
   }
 
   // --- Filter ---
+  void togglePlaceType(String type) {
+    final types = List<String>.from(state.placeTypes);
+    if (types.contains(type)) {
+      if (types.length == 1) return; // mind. ein Typ muss aktiv bleiben
+      types.remove(type);
+    } else {
+      types.add(type);
+    }
+    state = state.copyWith(placeTypes: types);
+  }
+
   void toggleCuisine(String cuisine) {
     final cuisines = List<String>.from(state.selectedCuisines);
     if (cuisines.contains(cuisine)) {
@@ -55,6 +66,9 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
   void toggleVegetarian(bool value) =>
       state = state.copyWith(isVegetarian: value);
+
+  void toggleWheelchair(bool value) =>
+      state = state.copyWith(wheelchairAccessible: value);
 
   void toggleExcludeVisited(bool value) =>
       state = state.copyWith(excludeVisited: value);
@@ -125,9 +139,11 @@ class RouletteNotifier extends StateNotifier<RouletteState> {
 
       final filters = SearchFilters(
         radiusKm: state.radiusKm,
+        placeTypes: state.placeTypes,
         cuisines: state.selectedCuisines,
         isVegan: state.isVegan,
         isVegetarian: state.isVegetarian,
+        wheelchairAccessible: state.wheelchairAccessible,
       );
 
       var results = await _apiService.fetchRestaurants(

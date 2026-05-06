@@ -33,7 +33,6 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final MapController _mapController = MapController();
 
-  bool _showSettings = false;
   bool _showProfile = false;
   bool _isMapReady = false;
   bool _isSpinning = false;
@@ -123,11 +122,8 @@ class _HomePageState extends ConsumerState<HomePage> {
             initialZoom: _zoomFor(state.radiusKm),
             onMapReady: () => setState(() => _isMapReady = true),
             onTap: () {
-              if (_showSettings || _showProfile) {
-                setState(() {
-                  _showSettings = false;
-                  _showProfile = false;
-                });
+              if (_showProfile) {
+                setState(() => _showProfile = false);
               }
             },
           ),
@@ -135,18 +131,11 @@ class _HomePageState extends ConsumerState<HomePage> {
             SearchButtonPanel(onPressed: notifier.loadRestaurants),
           ProfileMenu(
             isOpen: _showProfile,
-            onToggle: () => setState(() {
-              _showProfile = !_showProfile;
-              if (_showProfile) _showSettings = false;
-            }),
+            onToggle: () => setState(() => _showProfile = !_showProfile),
             onClose: () => setState(() => _showProfile = false),
           ),
           FilterMenu(
-            isOpen: _showSettings,
-            onToggle: () => setState(() {
-              _showSettings = !_showSettings;
-              if (_showSettings) _showProfile = false;
-            }),
+            onOpen: () => setState(() => _showProfile = false),
           ),
           if (state.isLoading)
             Positioned.fill(

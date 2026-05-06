@@ -12,9 +12,11 @@ class RouletteState {
     this.error,
     this.currentPosition,
     this.radiusKm = 2.0,
+    this.placeTypes = const ['restaurant'],
     this.selectedCuisines = const [],
     this.isVegan = false,
     this.isVegetarian = false,
+    this.wheelchairAccessible = false,
     this.excludeVisited = true,
     this.visitedIds = const {},
   });
@@ -25,9 +27,11 @@ class RouletteState {
   final String? error;
   final Position? currentPosition;
   final double radiusKm;
+  final List<String> placeTypes;
   final List<String> selectedCuisines;
   final bool isVegan;
   final bool isVegetarian;
+  final bool wheelchairAccessible;
   final bool excludeVisited;
   final Set<String> visitedIds;
 
@@ -39,9 +43,11 @@ class RouletteState {
     Position? currentPosition,
     double? radiusKm,
     bool clearSelectedRestaurant = false,
+    List<String>? placeTypes,
     List<String>? selectedCuisines,
     bool? isVegan,
     bool? isVegetarian,
+    bool? wheelchairAccessible,
     bool? excludeVisited,
     Set<String>? visitedIds,
   }) {
@@ -54,9 +60,11 @@ class RouletteState {
       error: error,
       currentPosition: currentPosition ?? this.currentPosition,
       radiusKm: radiusKm ?? this.radiusKm,
+      placeTypes: placeTypes ?? this.placeTypes,
       selectedCuisines: selectedCuisines ?? this.selectedCuisines,
       isVegan: isVegan ?? this.isVegan,
       isVegetarian: isVegetarian ?? this.isVegetarian,
+      wheelchairAccessible: wheelchairAccessible ?? this.wheelchairAccessible,
       excludeVisited: excludeVisited ?? this.excludeVisited,
       visitedIds: visitedIds ?? this.visitedIds,
     );
