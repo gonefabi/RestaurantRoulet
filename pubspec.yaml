@@ -34,6 +34,7 @@ dependencies:
   
   # Navigation & Utils
   url_launcher: ^6.2.4 # NEU: Für Google Maps
+  go_router: ^14.6.2
   rxdart: ^0.27.7
   equatable: ^2.0.5
   flutter_local_notifications: ^20.1.0

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/restaurant.dart';
-import '../services/database_service.dart';
+import '../core/models/restaurant.dart';
+import '../core/widgets/star_rating.dart';
 
 class RatingPopup extends StatefulWidget {
   final Restaurant restaurant;
@@ -70,22 +70,12 @@ class _RatingPopupState extends State<RatingPopup> {
               ),
             ],
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (index) {
-                return IconButton(
-                  icon: Icon(
-                    index < _rating ? Icons.star : Icons.star_border,
-                    color: Colors.amber,
-                    size: 32,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _rating = index + 1;
-                    });
-                  },
-                );
-              }),
+            Center(
+              child: StarRating(
+                rating: _rating,
+                size: 32,
+                onChanged: (r) => setState(() => _rating = r),
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(

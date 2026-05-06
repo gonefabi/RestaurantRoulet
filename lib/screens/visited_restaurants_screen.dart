@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
-import '../models/restaurant.dart';
+import '../core/models/restaurant.dart';
+import '../core/widgets/app_action_sheet.dart';
+import '../core/widgets/star_rating.dart';
 import '../providers/roulette_provider.dart';
 import '../services/database_service.dart';
 import '../widgets/rating_popup.dart';
@@ -118,133 +120,37 @@ class _VisitedRestaurantsScreenState
   }
 
   void _showActionSheet(BuildContext context, Restaurant restaurant) {
-    final theme = Theme.of(context);
     final isRated = (restaurant.userRating ?? 0) > 0;
 
-    showModalBottomSheet(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (ctx) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Handle bar
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Restaurant name
-                Text(
-                  restaurant.name,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (restaurant.address != null) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    restaurant.address!,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                ],
-
-                const SizedBox(height: 20),
-                const Divider(height: 1),
-                const SizedBox(height: 8),
-
-                // Rate action
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: Colors.amber.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.star_rounded,
-                        color: Colors.amber.shade700, size: 26),
-                  ),
-                  title: Text(
-                    isRated ? 'Bewertung ändern' : 'Jetzt bewerten',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: isRated
-                      ? Row(
-                          children: List.generate(
-                            5,
-                            (i) => Icon(
-                              i < restaurant.userRating!
-                                  ? Icons.star_rounded
-                                  : Icons.star_outline_rounded,
-                              size: 16,
-                              color: Colors.amber.shade600,
-                            ),
-                          ),
-                        )
-                      : Text('Noch nicht bewertet',
-                          style: TextStyle(color: Colors.grey.shade500)),
-                  trailing:
-                      Icon(Icons.chevron_right, color: Colors.grey.shade400),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    _showRatingDialog(restaurant);
-                  },
-                ),
-
-                const SizedBox(height: 4),
-
-                // Navigate action
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(Icons.navigation_rounded,
-                        color: theme.colorScheme.primary, size: 26),
-                  ),
-                  title: const Text(
-                    'Erneut besuchen',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Text('Route in Google Maps öffnen',
-                      style: TextStyle(color: Colors.grey.shade500)),
-                  trailing:
-                      Icon(Icons.chevron_right, color: Colors.grey.shade400),
-                  onTap: () {
-                    Navigator.of(ctx).pop();
-                    ref.read(rouletteProvider.notifier).navigateToRestaurant(restaurant);
-                  },
-                ),
-
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
-      },
+    AppActionSheet.show(
+      context,
+      title: restaurant.name,
+      subtitle: restaurant.address,
+      actions: [
+        AppAction(
+          icon: Icons.star_rounded,
+          iconColor: Colors.amber.shade700,
+          iconBackground: Colors.amber.shade50,
+          label: isRated ? 'Bewertung ändern' : 'Jetzt bewerten',
+          subtitle: isRated ? null : 'Noch nicht bewertet',
+          subtitleWidget: isRated
+              ? StarRating(
+                  rating: restaurant.userRating!,
+                  size: 16,
+                  filledColor: Colors.amber.shade600,
+                )
+              : null,
+          onTap: () => _showRatingDialog(restaurant),
+        ),
+        AppAction(
+          icon: Icons.navigation_rounded,
+          label: 'Erneut besuchen',
+          subtitle: 'Route in Google Maps öffnen',
+          onTap: () => ref
+              .read(rouletteProvider.notifier)
+              .navigateToRestaurant(restaurant),
+        ),
+      ],
     );
   }
 
@@ -454,7 +360,7 @@ class _VisitedRestaurantsScreenState
   }
 }
 
-/// Zeigt vorhandene Bewertung als Sterne-Badge
+/// Zeigt vorhandene Bewertung als Sterne-Badge.
 class _RatingBadge extends StatelessWidget {
   final int rating;
   const _RatingBadge({required this.rating});
@@ -468,20 +374,9 @@ class _RatingBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.amber.shade200),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          ...List.generate(
-            rating,
-            (_) => const Icon(Icons.star_rounded,
-                size: 16, color: Colors.amber),
-          ),
-          ...List.generate(
-            5 - rating,
-            (_) => Icon(Icons.star_outline_rounded,
-                size: 16, color: Colors.amber.shade300),
-          ),
-        ],
+      child: StarRating(
+        rating: rating,
+        emptyColor: Colors.amber.shade300,
       ),
     );
   }

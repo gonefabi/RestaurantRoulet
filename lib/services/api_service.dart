@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_keys.dart';
-import '../models/restaurant.dart';
+import '../core/models/restaurant.dart';
 
 // Einfache Filter für die Geoapify-Suche
 class SearchFilters {

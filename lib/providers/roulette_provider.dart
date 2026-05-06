@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart'; 
-import '../models/restaurant.dart';
+import '../core/models/restaurant.dart';
 import '../services/api_service.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';

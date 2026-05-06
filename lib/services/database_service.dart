@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../models/restaurant.dart';
+import '../core/models/restaurant.dart';
 
 class DatabaseService {
   static final DatabaseService _instance = DatabaseService._internal();

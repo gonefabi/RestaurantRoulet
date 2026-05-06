@@ -6,13 +6,14 @@ import 'dart:math';
 import '../providers/roulette_provider.dart';
 import '../widgets/roulette_wheel.dart';
 import '../widgets/loading_animation.dart';
-import 'visited_restaurants_screen.dart';
-import 'notification_settings_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:go_router/go_router.dart';
+import '../app/router.dart';
+import '../core/services/link_launcher_service.dart';
+import '../core/widgets/app_error_banner.dart';
 import '../widgets/rating_popup.dart';
 import '../services/database_service.dart';
 import '../services/notification_service.dart';
-import '../models/restaurant.dart';
+import '../core/models/restaurant.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -296,10 +297,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 dense: true,
                                 onTap: () {
                                   setState(() => _showProfile = false);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => const VisitedRestaurantsScreen()),
-                                  );
+                                  context.push(AppRoute.visited);
                                 },
                               ),
                               ListTile(
@@ -308,10 +306,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 dense: true,
                                 onTap: () {
                                   setState(() => _showProfile = false);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
-                                  );
+                                  context.push(AppRoute.notificationSettings);
                                 },
                               ),
                               const Divider(),
@@ -321,7 +316,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 dense: true,
                                 onTap: () {
                                   setState(() => _showProfile = false);
-                                  launchUrl(Uri.parse('https://gonefabi.github.io/RestaurantRoulet/datenschutz.html'), mode: LaunchMode.externalApplication);
+                                  ref.read(linkLauncherServiceProvider).openExternal(
+                                        Uri.parse('https://gonefabi.github.io/RestaurantRoulet/datenschutz.html'),
+                                      );
                                 },
                               ),
                               ListTile(
@@ -330,7 +327,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 dense: true,
                                 onTap: () {
                                   setState(() => _showProfile = false);
-                                  launchUrl(Uri.parse('https://gonefabi.github.io/RestaurantRoulet/impressum.html'), mode: LaunchMode.externalApplication);
+                                  ref.read(linkLauncherServiceProvider).openExternal(
+                                        Uri.parse('https://gonefabi.github.io/RestaurantRoulet/impressum.html'),
+                                      );
                                 },
                               ),
                             ],
@@ -617,21 +616,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       bottom: 40,
       left: 20,
       right: 20,
-      child: Material(
-        color: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(12)),
-          child: Row(
-            children: [
-              const Icon(Icons.error_outline, color: Colors.white),
-              const SizedBox(width: 10),
-              Expanded(child: Text(error, style: const TextStyle(color: Colors.white))),
-              IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: onClose),
-            ],
-          ),
-        ),
-      ),
+      child: AppErrorBanner(message: error, onClose: onClose),
     );
   }
 }
