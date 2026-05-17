@@ -218,6 +218,24 @@ abstract class AppLocalizations {
   /// **'Ein Fehler ist aufgetreten.'**
   String get errorGeneric;
 
+  /// No description provided for @errorRetry.
+  ///
+  /// In de, this message translates to:
+  /// **'Erneut versuchen'**
+  String get errorRetry;
+
+  /// No description provided for @errorOpenAppSettings.
+  ///
+  /// In de, this message translates to:
+  /// **'App-Einstellungen öffnen'**
+  String get errorOpenAppSettings;
+
+  /// No description provided for @errorOpenLocationSettings.
+  ///
+  /// In de, this message translates to:
+  /// **'Standort aktivieren'**
+  String get errorOpenLocationSettings;
+
   /// No description provided for @profileTitle.
   ///
   /// In de, this message translates to:

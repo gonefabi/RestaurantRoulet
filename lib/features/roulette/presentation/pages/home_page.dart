@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/localization/generated/app_localizations.dart';
@@ -122,6 +123,54 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  ({VoidCallback action, String label})? _recoveryFor(
+    AppLocalizations l,
+    RouletteError code,
+    RouletteNotifier notifier,
+  ) {
+    switch (code) {
+      case RouletteError.locationServicesDisabled:
+        return (
+          action: () => Geolocator.openLocationSettings(),
+          label: l.errorOpenLocationSettings,
+        );
+      case RouletteError.locationPermissionDeniedForever:
+        return (
+          action: () => Geolocator.openAppSettings(),
+          label: l.errorOpenAppSettings,
+        );
+      case RouletteError.locationPermissionDenied:
+      case RouletteError.noLocation:
+      case RouletteError.apiError:
+        return (
+          action: notifier.loadRestaurants,
+          label: l.errorRetry,
+        );
+      case RouletteError.noRestaurantsFound:
+      case RouletteError.noRestaurantsFoundExcludingVisited:
+        return null;
+    }
+  }
+
+  Widget _buildErrorBanner(
+    AppLocalizations l,
+    RouletteError code,
+    RouletteNotifier notifier,
+  ) {
+    final recovery = _recoveryFor(l, code, notifier);
+    return Positioned(
+      bottom: 40,
+      left: 20,
+      right: 20,
+      child: AppErrorBanner(
+        message: _localizedError(l, code),
+        onClose: notifier.clearRestaurants,
+        onRetry: recovery?.action,
+        retryLabel: recovery?.label,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -177,15 +226,7 @@ class _HomePageState extends ConsumerState<HomePage> {
           if (state.errorCode != null &&
               !state.isLoading &&
               state.restaurants.isEmpty)
-            Positioned(
-              bottom: 40,
-              left: 20,
-              right: 20,
-              child: AppErrorBanner(
-                message: _localizedError(l, state.errorCode!),
-                onClose: notifier.clearRestaurants,
-              ),
-            ),
+            _buildErrorBanner(l, state.errorCode!, notifier),
         ],
       ),
     );
