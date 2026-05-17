@@ -24,6 +24,9 @@
   "errorNoRestaurantsFoundExcludingVisited": "No restaurants found. (Visited ones hidden)",
   "errorApiUnknown": "Unknown error while querying.",
   "errorGeneric": "An error occurred.",
+  "errorRetry": "Try again",
+  "errorOpenAppSettings": "Open app settings",
+  "errorOpenLocationSettings": "Enable location",
 
   "profileTitle": "Profile",
   "profileVisited": "Visited restaurants",

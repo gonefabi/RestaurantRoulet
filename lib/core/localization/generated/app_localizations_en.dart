@@ -71,6 +71,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGeneric => 'An error occurred.';
 
   @override
+  String get errorRetry => 'Try again';
+
+  @override
+  String get errorOpenAppSettings => 'Open app settings';
+
+  @override
+  String get errorOpenLocationSettings => 'Enable location';
+
+  @override
   String get profileTitle => 'Profile';
 
   @override
