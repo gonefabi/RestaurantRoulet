@@ -73,6 +73,15 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errorGeneric => 'Ein Fehler ist aufgetreten.';
 
   @override
+  String get errorRetryLocation => 'Standort erneut versuchen';
+
+  @override
+  String get errorOpenLocationSettings => 'Standortdienste öffnen';
+
+  @override
+  String get errorOpenAppSettings => 'App-Einstellungen öffnen';
+
+  @override
   String get profileTitle => 'Profil';
 
   @override
