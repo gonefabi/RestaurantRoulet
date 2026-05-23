@@ -73,6 +73,9 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errorGeneric => 'Ein Fehler ist aufgetreten.';
 
   @override
+  String get errorRetryLocation => 'Standort erneut versuchen';
+
+  @override
   String get profileTitle => 'Profil';
 
   @override

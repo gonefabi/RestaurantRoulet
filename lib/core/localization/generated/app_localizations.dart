@@ -218,6 +218,12 @@ abstract class AppLocalizations {
   /// **'Ein Fehler ist aufgetreten.'**
   String get errorGeneric;
 
+  /// No description provided for @errorRetryLocation.
+  ///
+  /// In de, this message translates to:
+  /// **'Standort erneut versuchen'**
+  String get errorRetryLocation;
+
   /// No description provided for @profileTitle.
   ///
   /// In de, this message translates to:

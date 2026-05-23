@@ -71,6 +71,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorGeneric => 'An error occurred.';
 
   @override
+  String get errorRetryLocation => 'Try location again';
+
+  @override
   String get profileTitle => 'Profile';
 
   @override

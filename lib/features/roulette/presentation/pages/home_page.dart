@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../../core/localization/generated/app_localizations.dart';
@@ -122,6 +123,41 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  ({String label, Future<void> Function() run})? _retryActionFor(
+    AppLocalizations l,
+    RouletteError code,
+  ) {
+    final notifier = ref.read(rouletteProvider.notifier);
+    switch (code) {
+      case RouletteError.locationServicesDisabled:
+      case RouletteError.locationPermissionDenied:
+      case RouletteError.locationPermissionDeniedForever:
+      case RouletteError.noLocation:
+        return (
+          label: l.errorRetryLocation,
+          run: () async {
+            await notifier.updateLocation();
+            // Falls re-check zeigt, dass nur die System-Einstellungen helfen
+            // (Dienste aus / Permission dauerhaft verweigert), dorthin
+            // deep-linken — der Permission-Prompt wird sonst nicht erneut
+            // gezeigt.
+            if (!mounted) return;
+            final next = ref.read(rouletteProvider).errorCode;
+            if (next == RouletteError.locationServicesDisabled) {
+              await Geolocator.openLocationSettings();
+            } else if (next ==
+                RouletteError.locationPermissionDeniedForever) {
+              await Geolocator.openAppSettings();
+            }
+          },
+        );
+      case RouletteError.noRestaurantsFound:
+      case RouletteError.noRestaurantsFoundExcludingVisited:
+      case RouletteError.apiError:
+        return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -181,9 +217,16 @@ class _HomePageState extends ConsumerState<HomePage> {
               bottom: 40,
               left: 20,
               right: 20,
-              child: AppErrorBanner(
-                message: _localizedError(l, state.errorCode!),
-                onClose: notifier.clearRestaurants,
+              child: Builder(
+                builder: (_) {
+                  final retry = _retryActionFor(l, state.errorCode!);
+                  return AppErrorBanner(
+                    message: _localizedError(l, state.errorCode!),
+                    onClose: notifier.clearRestaurants,
+                    actionLabel: retry?.label,
+                    onAction: retry == null ? null : () => retry.run(),
+                  );
+                },
               ),
             ),
         ],
