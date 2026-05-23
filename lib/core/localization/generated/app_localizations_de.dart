@@ -76,12 +76,6 @@ class AppLocalizationsDe extends AppLocalizations {
   String get errorRetryLocation => 'Standort erneut versuchen';
 
   @override
-  String get errorOpenLocationSettings => 'Standortdienste öffnen';
-
-  @override
-  String get errorOpenAppSettings => 'App-Einstellungen öffnen';
-
-  @override
   String get profileTitle => 'Profil';
 
   @override

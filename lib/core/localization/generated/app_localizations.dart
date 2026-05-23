@@ -224,18 +224,6 @@ abstract class AppLocalizations {
   /// **'Standort erneut versuchen'**
   String get errorRetryLocation;
 
-  /// No description provided for @errorOpenLocationSettings.
-  ///
-  /// In de, this message translates to:
-  /// **'Standortdienste öffnen'**
-  String get errorOpenLocationSettings;
-
-  /// No description provided for @errorOpenAppSettings.
-  ///
-  /// In de, this message translates to:
-  /// **'App-Einstellungen öffnen'**
-  String get errorOpenAppSettings;
-
   /// No description provided for @profileTitle.
   ///
   /// In de, this message translates to:

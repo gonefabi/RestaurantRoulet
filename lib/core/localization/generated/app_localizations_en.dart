@@ -74,12 +74,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorRetryLocation => 'Try location again';
 
   @override
-  String get errorOpenLocationSettings => 'Open location settings';
-
-  @override
-  String get errorOpenAppSettings => 'Open app settings';
-
-  @override
   String get profileTitle => 'Profile';
 
   @override
